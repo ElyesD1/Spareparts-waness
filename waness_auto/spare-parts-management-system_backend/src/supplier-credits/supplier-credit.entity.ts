@@ -31,8 +31,8 @@ export class SupplierCredit {
   })
   source_type: CreditSourceType;
 
-  @Prop({ default: null, type: Number })
-  source_id: number;
+  @Prop({ default: null, type: String })
+  source_id: string;
 
   @Prop({ type: Date, default: null })
   expiry_date: Date;

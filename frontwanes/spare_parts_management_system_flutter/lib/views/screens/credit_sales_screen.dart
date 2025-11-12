@@ -23,6 +23,10 @@ class _CreditSalesScreenState extends State<CreditSalesScreen>
   final TextEditingController _searchController = TextEditingController();
   late AnimationController _animationController;
 
+  // Statistics for admin
+  Map<String, dynamic>? _statistics;
+  bool _loadingStatistics = false;
+
   // Responsive breakpoints
   bool _isMobile(BuildContext context) =>
       MediaQuery.of(context).size.width < 600;
@@ -52,6 +56,37 @@ class _CreditSalesScreenState extends State<CreditSalesScreen>
       setState(() {
         _currentUserRole = user['role'] as String?;
       });
+
+      // Load statistics if user is admin
+      if (_currentUserRole == 'admin') {
+        _loadStatistics();
+      }
+    }
+  }
+
+  Future<void> _loadStatistics() async {
+    try {
+      if (mounted) {
+        setState(() {
+          _loadingStatistics = true;
+        });
+      }
+
+      final stats = await CreditSalesService().getStatistics();
+
+      if (mounted) {
+        setState(() {
+          _statistics = stats;
+          _loadingStatistics = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loadingStatistics = false;
+        });
+      }
+      print('Error loading statistics: $e');
     }
   }
 
@@ -158,6 +193,12 @@ class _CreditSalesScreenState extends State<CreditSalesScreen>
       child: Column(
         children: [
           _buildMobileHeader(),
+          // Statistics card for admin only
+          if (_currentUserRole == 'admin' && _statistics != null)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: _buildStatisticsCard(),
+            ),
           Expanded(
             child:
                 _loading
@@ -189,6 +230,15 @@ class _CreditSalesScreenState extends State<CreditSalesScreen>
           child: Column(
             children: [
               _buildHeader(),
+              // Statistics card for admin only
+              if (_currentUserRole == 'admin' && _statistics != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 8,
+                  ),
+                  child: _buildStatisticsCard(),
+                ),
               Expanded(
                 child:
                     _loading
@@ -716,6 +766,146 @@ class _CreditSalesScreenState extends State<CreditSalesScreen>
               }
             },
           ),
+    );
+  }
+
+  Widget _buildStatisticsCard() {
+    final totalCredit = _statistics?['totalCredit'] ?? 0.0;
+    final totalPaid = _statistics?['totalPaid'] ?? 0.0;
+    final totalRemaining = _statistics?['totalRemaining'] ?? 0.0;
+    final activeCount = _statistics?['activeCreditSales'] ?? 0;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.indigo.shade600, Colors.indigo.shade400],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.indigo.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.account_balance_wallet,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Text(
+                'Statistiques des Crédits',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatItem(
+                  'Crédit Total',
+                  '${totalCredit.toStringAsFixed(2)} DNT',
+                  Icons.credit_card,
+                  Colors.white.withOpacity(0.9),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStatItem(
+                  'Total Payé',
+                  '${totalPaid.toStringAsFixed(2)} DNT',
+                  Icons.payments,
+                  Colors.green.shade300,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStatItem(
+                  'Restant',
+                  '${totalRemaining.toStringAsFixed(2)} DNT',
+                  Icons.pending_actions,
+                  Colors.orange.shade300,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStatItem(
+                  'Ventes Actives',
+                  activeCount.toString(),
+                  Icons.trending_up,
+                  Colors.blue.shade300,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(
+    String label,
+    String value,
+    IconData icon,
+    Color iconColor,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: iconColor, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

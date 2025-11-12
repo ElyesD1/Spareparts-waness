@@ -67,21 +67,35 @@ export class CreditPaymentsService {
       // Post-commit side effects (best-effort; do not block payment creation)
       (async () => {
         try {
+          console.log('[PAYMENT] Starting post-payment processing...');
+          
           // Update customer balance
           await this.customersService.updateBalance(creditSaleExists.customer_id.toString(), -normalizedDto.amount);
-          console.log('Customer balance updated');
+          console.log('[PAYMENT] Customer balance updated');
           
           // Update credit sale status if needed
           const totalPaid = await this.getTotalPaid(normalizedDto.credit_sale_id);
-          const remaining = Number(creditSaleExists.credit_amount || 0) - totalPaid;
-          console.log(`Total paid: ${totalPaid}, Remaining: ${remaining}`);
+          const downPayment = Number(creditSaleExists.down_payment || 0);
+          const creditAmount = Number(creditSaleExists.credit_amount || 0);
+          const remaining = creditAmount - totalPaid;
+          
+          console.log('[PAYMENT] Payment calculation:');
+          console.log(`  - Credit amount: ${creditAmount}`);
+          console.log(`  - Down payment: ${downPayment}`);
+          console.log(`  - Total installment payments: ${totalPaid}`);
+          console.log(`  - Remaining balance: ${remaining}`);
           
           if (remaining <= 0.01) {
-            // Mark as completed - you need to implement this in credit-sales.service.ts
-            console.log('Credit sale should be marked as completed');
+            console.log('[PAYMENT] ✅ Credit sale is fully paid! Updating status to completed...');
+            const result = await this.creditSalesService.updateStatus(normalizedDto.credit_sale_id, 'completed');
+            console.log('[PAYMENT] ✅ Credit sale status updated to completed:', result);
+            console.log('[PAYMENT] ✅ Mirror sale should now be created and visible in sales screen');
+          } else {
+            console.log(`[PAYMENT] ⏳ Still has remaining balance: ${remaining.toFixed(2)} DNT`);
           }
         } catch (err) {
-          console.error('Side effect error (non-blocking):', err);
+          console.error('[PAYMENT] ❌ Side effect error (non-blocking):', err);
+          console.error('[PAYMENT] Error stack:', err.stack);
         }
       })();
       

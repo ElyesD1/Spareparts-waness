@@ -172,6 +172,16 @@ class PurchaseService {
     }
   }
 
+  Future<void> deletePurchase(String id) async {
+    final response = await http.delete(
+      Uri.parse('http://localhost:3000/purchases/$id'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw Exception('Erreur lors de la suppression de l\'achat');
+    }
+  }
+
   Future<void> confirmDelivery(
     String purchaseId,
     String deliveredByUserId,

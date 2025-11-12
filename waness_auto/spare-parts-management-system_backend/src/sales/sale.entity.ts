@@ -21,8 +21,8 @@ export class Sale {
   total_amount: number;
 
   // Link back to a credit sale that generated this sale (idempotency)
-  @Prop({ type: Number, default: null })
-  source_credit_sale_id: number | null;
+  @Prop({ type: String, default: null })
+  source_credit_sale_id: string | null;
 }
 
 export const SaleSchema = SchemaFactory.createForClass(Sale);

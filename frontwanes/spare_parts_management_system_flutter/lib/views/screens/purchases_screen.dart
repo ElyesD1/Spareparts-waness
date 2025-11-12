@@ -347,6 +347,218 @@ class _PurchasesScreenState extends State<PurchasesScreen>
     }
   }
 
+  Future<void> _deletePurchase(dynamic purchase) async {
+    // Only allow deletion if purchase is not delivered
+    if (purchase.status == 'delivered') {
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.warning, color: Colors.orange, size: 24),
+                  const SizedBox(width: 8),
+                  const Text('Action Non Autorisée'),
+                ],
+              ),
+              content: const Text(
+                'Impossible de supprimer un achat qui a déjà été livré.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+      );
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Row(
+              children: [
+                Icon(Icons.warning, color: Colors.red, size: 24),
+                const SizedBox(width: 8),
+                const Text('Confirmer la Suppression'),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Êtes-vous sûr de vouloir supprimer cet achat ?'),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Fournisseur: ${purchase.supplier?['name'] ?? 'N/A'}',
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      Text('Date: ${purchase.date ?? 'N/A'}'),
+                      Text(
+                        'Montant: ${purchase.finalAmount?.toStringAsFixed(2) ?? '0.00'} DNT',
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Cette action est irréversible.',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Annuler'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Supprimer'),
+              ),
+            ],
+          ),
+    );
+
+    if (confirmed == true) {
+      try {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder:
+              (context) => const AlertDialog(
+                content: Row(
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(width: 16),
+                    Text('Suppression en cours...'),
+                  ],
+                ),
+              ),
+        );
+
+        await PurchaseService().deletePurchase(purchase.id);
+
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+
+        showDialog(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.green, size: 24),
+                    const SizedBox(width: 8),
+                    const Text('Succès'),
+                  ],
+                ),
+                content: const Text('L\'achat a été supprimé avec succès.'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+        );
+
+        _fetchPurchases();
+      } catch (e) {
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+
+        showDialog(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: Row(
+                  children: [
+                    Icon(Icons.error, color: Colors.red, size: 24),
+                    const SizedBox(width: 8),
+                    const Text('Erreur'),
+                  ],
+                ),
+                content: Text('Échec de la suppression: $e'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+        );
+      }
+    }
+  }
+
+  void _editPurchase(dynamic purchase) {
+    // Only allow editing if purchase is not delivered
+    if (purchase.status == 'delivered') {
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.warning, color: Colors.orange, size: 24),
+                  const SizedBox(width: 8),
+                  const Text('Action Non Autorisée'),
+                ],
+              ),
+              content: const Text(
+                'Impossible de modifier un achat qui a déjà été livré.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Modification d\'achat'),
+            content: const Text(
+              'La fonctionnalité de modification d\'achat sera bientôt disponible.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+    );
+  }
+
   void _onSearch(String value) {
     setState(() {
       _search = value;
@@ -1095,7 +1307,7 @@ class _PurchasesScreenState extends State<PurchasesScreen>
                   ),
                   IconButton(
                     icon: const Icon(Icons.edit, size: 18),
-                    onPressed: () {},
+                    onPressed: () => _editPurchase(purchase),
                     tooltip: 'Modifier',
                     iconSize: 24,
                     constraints: const BoxConstraints(
@@ -1106,7 +1318,7 @@ class _PurchasesScreenState extends State<PurchasesScreen>
                   ),
                   IconButton(
                     icon: const Icon(Icons.delete, size: 18),
-                    onPressed: () {},
+                    onPressed: () => _deletePurchase(purchase),
                     tooltip: 'Supprimer',
                     iconSize: 24,
                     constraints: const BoxConstraints(

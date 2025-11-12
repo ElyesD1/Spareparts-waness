@@ -24,7 +24,8 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
   static const int _movementsPerPage = 20;
 
   // Responsive breakpoints
-  bool _isMobile(BuildContext context) => MediaQuery.of(context).size.width < 600;
+  bool _isMobile(BuildContext context) =>
+      MediaQuery.of(context).size.width < 600;
 
   @override
   void initState() {
@@ -57,7 +58,8 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
         } else if (e.toString().contains('HTTP')) {
           errorMessage = 'Erreur de communication avec le serveur';
         } else if (e.toString().contains('Exception')) {
-          errorMessage = 'Erreur inattendue: ${e.toString().split(':').last.trim()}';
+          errorMessage =
+              'Erreur inattendue: ${e.toString().split(':').last.trim()}';
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -78,22 +80,27 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
 
   void _applyFilters() {
     setState(() {
-      _filteredMovements = _stockMovements.where((movement) {
-        // Filter by type
-        if (_selectedType != 'all' && movement.movementType != _selectedType) {
-          return false;
-        }
+      _filteredMovements =
+          _stockMovements.where((movement) {
+            // Filter by type
+            if (_selectedType != 'all' &&
+                movement.movementType != _selectedType) {
+              return false;
+            }
 
-        // Filter by search
-        if (_search.isNotEmpty) {
-          final searchLower = _search.toLowerCase();
-          return movement.note?.toLowerCase().contains(searchLower) == true ||
-              movement.displayProductName.toLowerCase().contains(searchLower) ||
-              movement.displayUserName.toLowerCase().contains(searchLower);
-        }
+            // Filter by search
+            if (_search.isNotEmpty) {
+              final searchLower = _search.toLowerCase();
+              return movement.note?.toLowerCase().contains(searchLower) ==
+                      true ||
+                  movement.displayProductName.toLowerCase().contains(
+                    searchLower,
+                  ) ||
+                  movement.displayUserName.toLowerCase().contains(searchLower);
+            }
 
-        return true;
-      }).toList();
+            return true;
+          }).toList();
 
       _currentPage = 1;
     });
@@ -159,7 +166,9 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
     final endIndex = startIndex + _movementsPerPage;
     return _filteredMovements.sublist(
       startIndex,
-      endIndex > _filteredMovements.length ? _filteredMovements.length : endIndex,
+      endIndex > _filteredMovements.length
+          ? _filteredMovements.length
+          : endIndex,
     );
   }
 
@@ -169,310 +178,373 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
   void _showMovementDetails(StockMovement movement) {
     final movementColor = _getMovementTypeColor(movement.movementType);
     final movementIcon = _getMovementTypeIcon(movement.movementType);
-    
+
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          constraints: BoxConstraints(
-            maxWidth: _isMobile(context) ? MediaQuery.of(context).size.width * 0.95 : 700,
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.15),
-                blurRadius: 30,
-                offset: const Offset(0, 15),
+      builder:
+          (context) => Dialog(
+            backgroundColor: Colors.transparent,
+            child: Container(
+              constraints: BoxConstraints(
+                maxWidth:
+                    _isMobile(context)
+                        ? MediaQuery.of(context).size.width * 0.95
+                        : 700,
+                maxHeight: MediaQuery.of(context).size.height * 0.85,
               ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [movementColor, movementColor.withOpacity(0.8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 30,
+                    offset: const Offset(0, 15),
                   ),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(24),
-                    topRight: Radius.circular(24),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(movementIcon, color: Colors.white, size: 24),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Détails du Mouvement',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            _getMovementTypeText(movement.movementType),
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.2),
-                      ),
-                    ),
-                  ],
-                ),
+                ],
               ),
-              
-              // Content
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Movement Type Badge
-                      Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [movementColor, movementColor.withOpacity(0.8)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(24),
+                        topRight: Radius.circular(24),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: movementColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: movementColor, width: 2),
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                          child: Icon(
+                            movementIcon,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(movementIcon, color: movementColor, size: 20),
-                              const SizedBox(width: 8),
+                              Text(
+                                'Détails du Mouvement',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               Text(
                                 _getMovementTypeText(movement.movementType),
                                 style: TextStyle(
-                                  color: movementColor,
-                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white.withOpacity(0.9),
                                   fontSize: 16,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      
-                      // Product Information
-                      _buildDetailSection(
-                        'Informations Produit',
-                        Icons.inventory_2,
-                        Colors.blue,
-                        [
-                          _buildDetailRow('Nom du Produit', movement.displayProductName),
-                          _buildDetailRow('Marque', movement.productBrand ?? 'N/A'),
-                          _buildDetailRow('Quantité', '${movement.quantity}'),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      
-                      // Warehouse Information
-                      _buildDetailSection(
-                        'Informations Entrepôt',
-                        Icons.warehouse,
-                        Colors.orange,
-                        [
-                          _buildDetailRow('Entrepôt Source', movement.fromWarehouseName ?? 'N/A'),
-                          _buildDetailRow('Entrepôt Destination', movement.toWarehouseName ?? 'N/A'),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      
-                      // User Information - ENHANCED FOR PURCHASES
-                      _buildDetailSection(
-                        'Informations Utilisateurs',
-                        Icons.people,
-                        Colors.purple,
-                        [
-                          _buildDetailRow('Utilisateur Principal', movement.displayUserName),
-                          _buildDetailRow('Rôle', movement.displayUserRole),
-                          
-                          // NEW: Purchase-specific user information
-                          if (movement.movementType.toLowerCase() == 'achat') ...[
-                            const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.05),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.green.withOpacity(0.2)),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close, color: Colors.white),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white.withOpacity(0.2),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Content
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Movement Type Badge
+                          Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              decoration: BoxDecoration(
+                                color: movementColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: movementColor,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Icon(Icons.shopping_cart, color: Colors.green, size: 16),
-                                      const SizedBox(width: 8),
-                                      const Text(
-                                        'Détails de l\'Achat',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.green,
-                                        ),
-                                      ),
-                                    ],
+                                  Icon(
+                                    movementIcon,
+                                    color: movementColor,
+                                    size: 20,
                                   ),
-                                  const SizedBox(height: 8),
-                                  _buildDetailRow(
-                                    'Créé par',
-                                    movement.displayUserName,
-                                    isHighlighted: true,
-                                  ),
-                                  _buildDetailRow(
-                                    'Livré par',
-                                    _getDeliveryUser(movement),
-                                    isHighlighted: true,
-                                  ),
-                                  _buildDetailRow(
-                                    'Status de Livraison',
-                                    _getDeliveryStatus(movement),
-                                    statusColor: _getDeliveryStatusColor(movement),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _getMovementTypeText(movement.movementType),
+                                    style: TextStyle(
+                                      color: movementColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      
-                      // Date and Time Information
-                      _buildDetailSection(
-                        'Informations Temporelles',
-                        Icons.schedule,
-                        Colors.indigo,
-                        [
-                          _buildDetailRow(
-                            'Date de Création',
-                            DateFormat('dd/MM/yyyy à HH:mm:ss').format(movement.createdAt),
                           ),
-                          _buildDetailRow(
-                            'Heure Exacte',
-                            DateFormat('EEEE, dd MMMM yyyy', 'fr_FR').format(movement.createdAt),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      
-                      // Notes
-                      if (movement.note != null && movement.note!.isNotEmpty)
-                        _buildDetailSection(
-                          'Notes',
-                          Icons.note,
-                          Colors.teal,
-                          [
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[50],
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.grey[300]!),
+                          const SizedBox(height: 24),
+
+                          // Product Information
+                          _buildDetailSection(
+                            'Informations Produit',
+                            Icons.inventory_2,
+                            Colors.blue,
+                            [
+                              _buildDetailRow(
+                                'Nom du Produit',
+                                movement.displayProductName,
                               ),
-                              child: Text(
-                                movement.note!,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF374151),
-                                  height: 1.4,
+                              _buildDetailRow(
+                                'Marque',
+                                movement.productBrand ?? 'N/A',
+                              ),
+                              _buildDetailRow(
+                                'Quantité',
+                                '${movement.quantity}',
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Warehouse Information
+                          _buildDetailSection(
+                            'Informations Entrepôt',
+                            Icons.warehouse,
+                            Colors.orange,
+                            [
+                              _buildDetailRow(
+                                'Entrepôt Source',
+                                movement.displayFromWarehouseName,
+                              ),
+                              _buildDetailRow(
+                                'Entrepôt Destination',
+                                movement.displayToWarehouseName,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+
+                          // User Information - ENHANCED FOR PURCHASES
+                          _buildDetailSection(
+                            'Informations Utilisateurs',
+                            Icons.people,
+                            Colors.purple,
+                            [
+                              _buildDetailRow(
+                                'Utilisateur Principal',
+                                movement.displayUserName,
+                              ),
+                              _buildDetailRow('Rôle', movement.displayUserRole),
+
+                              // NEW: Purchase-specific user information
+                              if (movement.movementType.toLowerCase() ==
+                                  'achat') ...[
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withOpacity(0.05),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: Colors.green.withOpacity(0.2),
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.shopping_cart,
+                                            color: Colors.green,
+                                            size: 16,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          const Text(
+                                            'Détails de l\'Achat',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.green,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      _buildDetailRow(
+                                        'Créé par',
+                                        movement.displayUserName,
+                                        isHighlighted: true,
+                                      ),
+                                      _buildDetailRow(
+                                        'Livré par',
+                                        _getDeliveryUser(movement),
+                                        isHighlighted: true,
+                                      ),
+                                      _buildDetailRow(
+                                        'Status de Livraison',
+                                        _getDeliveryStatus(movement),
+                                        statusColor: _getDeliveryStatusColor(
+                                          movement,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Date and Time Information
+                          _buildDetailSection(
+                            'Informations Temporelles',
+                            Icons.schedule,
+                            Colors.indigo,
+                            [
+                              _buildDetailRow(
+                                'Date de Création',
+                                DateFormat(
+                                  'dd/MM/yyyy à HH:mm:ss',
+                                ).format(movement.createdAt),
+                              ),
+                              _buildDetailRow(
+                                'Heure Exacte',
+                                DateFormat(
+                                  'EEEE, dd MMMM yyyy',
+                                  'fr_FR',
+                                ).format(movement.createdAt),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Notes
+                          if (movement.note != null &&
+                              movement.note!.isNotEmpty)
+                            _buildDetailSection(
+                              'Notes',
+                              Icons.note,
+                              Colors.teal,
+                              [
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[50],
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: Colors.grey[300]!,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    movement.note!,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF374151),
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Footer
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(24),
+                        bottomRight: Radius.circular(24),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close, size: 18),
+                            label: const Text('Fermer'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.grey[700],
+                              side: BorderSide(color: Colors.grey[300]!),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                    ],
-                  ),
-                ),
-              ),
-              
-              // Footer
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(24),
-                    bottomRight: Radius.circular(24),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close, size: 18),
-                        label: const Text('Fermer'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.grey[700],
-                          side: BorderSide(color: Colors.grey[300]!),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              // Could add functionality to view related documents
+                            },
+                            icon: const Icon(Icons.visibility, size: 18),
+                            label: const Text('Voir Plus'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: movementColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          // Could add functionality to view related documents
-                        },
-                        icon: const Icon(Icons.visibility, size: 18),
-                        label: const Text('Voir Plus'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: movementColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          elevation: 0,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
     );
   }
 
-  Widget _buildDetailSection(String title, IconData icon, Color color, List<Widget> children) {
+  Widget _buildDetailSection(
+    String title,
+    IconData icon,
+    Color color,
+    List<Widget> children,
+  ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -513,7 +585,7 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
   }
 
   Widget _buildDetailRow(
-    String label, 
+    String label,
     String value, {
     bool isHighlighted = false,
     Color? statusColor,
@@ -529,7 +601,8 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
               '$label:',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: isHighlighted ? Colors.green[700] : const Color(0xFF6B7280),
+                color:
+                    isHighlighted ? Colors.green[700] : const Color(0xFF6B7280),
                 fontSize: 14,
               ),
             ),
@@ -538,7 +611,11 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
             child: Text(
               value,
               style: TextStyle(
-                color: statusColor ?? (isHighlighted ? Colors.green[800] : const Color(0xFF374151)),
+                color:
+                    statusColor ??
+                    (isHighlighted
+                        ? Colors.green[800]
+                        : const Color(0xFF374151)),
                 fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
                 fontSize: 14,
               ),
@@ -568,7 +645,7 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
     final now = DateTime.now();
     final movementDate = movement.createdAt;
     final daysDiff = now.difference(movementDate).inDays;
-    
+
     if (daysDiff == 0) {
       return 'Livré Aujourd\'hui';
     } else if (daysDiff == 1) {
@@ -584,7 +661,7 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
   Color _getDeliveryStatusColor(StockMovement movement) {
     final now = DateTime.now();
     final daysDiff = now.difference(movement.createdAt).inDays;
-    
+
     if (daysDiff <= 1) {
       return Colors.green;
     } else if (daysDiff <= 7) {
@@ -599,9 +676,12 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       // Add drawer for mobile
-      drawer: _isMobile(context) ? Drawer(
-        child: const Sidebar(selected: SidebarSection.stockMovements),
-      ) : null,
+      drawer:
+          _isMobile(context)
+              ? Drawer(
+                child: const Sidebar(selected: SidebarSection.stockMovements),
+              )
+              : null,
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (_isMobile(context)) {
@@ -620,7 +700,7 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
         children: [
           // Mobile Header with Menu Button
           _buildMobileHeader(),
-          
+
           // Content
           Expanded(
             child: SingleChildScrollView(
@@ -630,11 +710,11 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                   // Stats
                   _buildMobileStats(),
                   const SizedBox(height: 20),
-                  
+
                   // Search and Filter
                   _buildMobileFilters(),
                   const SizedBox(height: 20),
-                  
+
                   // Movements List
                   _buildMobileMovementsList(),
                 ],
@@ -666,17 +746,18 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
       child: Row(
         children: [
           Builder(
-            builder: (context) => Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: IconButton(
-                onPressed: () => Scaffold.of(context).openDrawer(),
-                icon: const Icon(Icons.menu, color: Colors.white, size: 24),
-                tooltip: 'Ouvrir le menu',
-              ),
-            ),
+            builder:
+                (context) => Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                    icon: const Icon(Icons.menu, color: Colors.white, size: 24),
+                    tooltip: 'Ouvrir le menu',
+                  ),
+                ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -708,9 +789,12 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
 
   Widget _buildMobileStats() {
     final totalMovements = _stockMovements.length;
-    final salesCount = _stockMovements.where((m) => m.movementType == 'vente').length;
-    final purchasesCount = _stockMovements.where((m) => m.movementType == 'achat').length;
-    final returnsCount = _stockMovements.where((m) => m.movementType == 'return').length;
+    final salesCount =
+        _stockMovements.where((m) => m.movementType == 'vente').length;
+    final purchasesCount =
+        _stockMovements.where((m) => m.movementType == 'achat').length;
+    final returnsCount =
+        _stockMovements.where((m) => m.movementType == 'return').length;
 
     return GridView.count(
       crossAxisCount: 2,
@@ -720,15 +804,40 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
       mainAxisSpacing: 12,
       childAspectRatio: 1.3,
       children: [
-        _buildMobileStatCard('Total', totalMovements.toString(), Icons.analytics, Colors.blue),
-        _buildMobileStatCard('Ventes', salesCount.toString(), Icons.shopping_cart, Colors.red),
-        _buildMobileStatCard('Achats', purchasesCount.toString(), Icons.inventory, Colors.green),
-        _buildMobileStatCard('Retours', returnsCount.toString(), Icons.undo, Colors.orange),
+        _buildMobileStatCard(
+          'Total',
+          totalMovements.toString(),
+          Icons.analytics,
+          Colors.blue,
+        ),
+        _buildMobileStatCard(
+          'Ventes',
+          salesCount.toString(),
+          Icons.shopping_cart,
+          Colors.red,
+        ),
+        _buildMobileStatCard(
+          'Achats',
+          purchasesCount.toString(),
+          Icons.inventory,
+          Colors.green,
+        ),
+        _buildMobileStatCard(
+          'Retours',
+          returnsCount.toString(),
+          Icons.undo,
+          Colors.orange,
+        ),
       ],
     );
   }
 
-  Widget _buildMobileStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildMobileStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -766,10 +875,7 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
           const SizedBox(height: 4),
           Text(
             title,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             textAlign: TextAlign.center,
           ),
         ],
@@ -803,7 +909,7 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        
+
         // Type Filter
         Container(
           width: double.infinity,
@@ -835,18 +941,20 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
-    
+
     if (_hasError) {
       return _buildErrorState();
     }
-    
+
     if (_filteredMovements.isEmpty) {
       return _buildEmptyState();
     }
 
     return Column(
       children: [
-        ..._paginatedMovements.map((movement) => _buildMobileMovementCard(movement)),
+        ..._paginatedMovements.map(
+          (movement) => _buildMobileMovementCard(movement),
+        ),
         if (_totalPages > 1) ...[
           const SizedBox(height: 20),
           _buildMobilePagination(),
@@ -858,7 +966,7 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
   Widget _buildMobileMovementCard(StockMovement movement) {
     final movementColor = _getMovementTypeColor(movement.movementType);
     final movementIcon = _getMovementTypeIcon(movement.movementType);
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -924,21 +1032,29 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          
+
           // Info Grid
           Row(
             children: [
               Expanded(
-                child: _buildMobileInfoBox('Quantité', '${movement.quantity}', movementColor),
+                child: _buildMobileInfoBox(
+                  'Quantité',
+                  '${movement.quantity}',
+                  movementColor,
+                ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _buildMobileInfoBox('Utilisateur', movement.displayUserName, Colors.purple),
+                child: _buildMobileInfoBox(
+                  'Utilisateur',
+                  movement.displayUserName,
+                  Colors.purple,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          
+
           Row(
             children: [
               Expanded(
@@ -973,13 +1089,7 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
       ),
       child: Column(
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              color: Colors.grey[600],
-            ),
-          ),
+          Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
           const SizedBox(height: 2),
           Text(
             value,
@@ -1000,7 +1110,8 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         IconButton(
-          onPressed: _currentPage > 1 ? () => setState(() => _currentPage--) : null,
+          onPressed:
+              _currentPage > 1 ? () => setState(() => _currentPage--) : null,
           icon: const Icon(Icons.chevron_left),
           color: _currentPage > 1 ? Colors.blue : Colors.grey,
         ),
@@ -1009,7 +1120,10 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
           style: const TextStyle(fontWeight: FontWeight.w500),
         ),
         IconButton(
-          onPressed: _currentPage < _totalPages ? () => setState(() => _currentPage++) : null,
+          onPressed:
+              _currentPage < _totalPages
+                  ? () => setState(() => _currentPage++)
+                  : null,
           icon: const Icon(Icons.chevron_right),
           color: _currentPage < _totalPages ? Colors.blue : Colors.grey,
         ),
@@ -1041,13 +1155,16 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
 
                       // Movements table
                       Expanded(
-                        child: _loading
-                            ? const Center(child: CircularProgressIndicator())
-                            : _hasError
+                        child:
+                            _loading
+                                ? const Center(
+                                  child: CircularProgressIndicator(),
+                                )
+                                : _hasError
                                 ? _buildErrorState()
                                 : _filteredMovements.isEmpty
-                                    ? _buildEmptyState()
-                                    : _buildMovementsTable(),
+                                ? _buildEmptyState()
+                                : _buildMovementsTable(),
                       ),
 
                       // Pagination
@@ -1068,24 +1185,52 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
 
   Widget _buildStatsHeader() {
     final totalMovements = _stockMovements.length;
-    final salesCount = _stockMovements.where((m) => m.movementType == 'vente').length;
-    final purchasesCount = _stockMovements.where((m) => m.movementType == 'achat').length;
-    final returnsCount = _stockMovements.where((m) => m.movementType == 'return').length;
+    final salesCount =
+        _stockMovements.where((m) => m.movementType == 'vente').length;
+    final purchasesCount =
+        _stockMovements.where((m) => m.movementType == 'achat').length;
+    final returnsCount =
+        _stockMovements.where((m) => m.movementType == 'return').length;
 
     return Row(
       children: [
-        _buildStatCard('Total', totalMovements.toString(), Icons.analytics, Colors.blue),
+        _buildStatCard(
+          'Total',
+          totalMovements.toString(),
+          Icons.analytics,
+          Colors.blue,
+        ),
         const SizedBox(width: 16),
-        _buildStatCard('Ventes', salesCount.toString(), Icons.shopping_cart, Colors.red),
+        _buildStatCard(
+          'Ventes',
+          salesCount.toString(),
+          Icons.shopping_cart,
+          Colors.red,
+        ),
         const SizedBox(width: 16),
-        _buildStatCard('Achats', purchasesCount.toString(), Icons.inventory, Colors.green),
+        _buildStatCard(
+          'Achats',
+          purchasesCount.toString(),
+          Icons.inventory,
+          Colors.green,
+        ),
         const SizedBox(width: 16),
-        _buildStatCard('Retours', returnsCount.toString(), Icons.undo, Colors.orange),
+        _buildStatCard(
+          'Retours',
+          returnsCount.toString(),
+          Icons.undo,
+          Colors.orange,
+        ),
       ],
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(20),
@@ -1255,7 +1400,16 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                 Expanded(flex: 2, child: _buildHeaderCell('Utilisateur')),
                 Expanded(flex: 2, child: _buildHeaderCell('Date')),
                 Expanded(flex: 3, child: _buildHeaderCell('Note')),
-                const SizedBox(width: 80, child: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey))),
+                const SizedBox(
+                  width: 80,
+                  child: Text(
+                    'Actions',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -1302,9 +1456,14 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
             Expanded(
               flex: 2,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: _getMovementTypeColor(movement.movementType).withOpacity(0.1),
+                  color: _getMovementTypeColor(
+                    movement.movementType,
+                  ).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: _getMovementTypeColor(movement.movementType),
@@ -1344,7 +1503,10 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                 children: [
                   Text(
                     movement.displayProductName,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),
@@ -1361,7 +1523,10 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
               flex: 2,
               child: Text(
                 '${movement.quantity}',
-                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
               ),
             ),
 
@@ -1371,8 +1536,16 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('De: ${movement.fromWarehouseName}', style: const TextStyle(fontSize: 12)),
-                  Text('Vers: ${movement.toWarehouseName}', style: const TextStyle(fontSize: 12)),
+                  Text(
+                    'De: ${movement.displayFromWarehouseName}',
+                    style: const TextStyle(fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    'Vers: ${movement.displayToWarehouseName}',
+                    style: const TextStyle(fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),
@@ -1385,7 +1558,10 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
                 children: [
                   Text(
                     movement.displayUserName,
-                    style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
                   ),
                   Text(
                     movement.displayUserRole,
@@ -1475,7 +1651,11 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey.shade400),
+          Icon(
+            Icons.inventory_2_outlined,
+            size: 64,
+            color: Colors.grey.shade400,
+          ),
           const SizedBox(height: 16),
           Text(
             'Aucun mouvement de stock trouvé',
@@ -1501,7 +1681,8 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         IconButton(
-          onPressed: _currentPage > 1 ? () => setState(() => _currentPage--) : null,
+          onPressed:
+              _currentPage > 1 ? () => setState(() => _currentPage--) : null,
           icon: const Icon(Icons.chevron_left),
           color: _currentPage > 1 ? Colors.blue : Colors.grey,
         ),
@@ -1512,7 +1693,10 @@ class _StockMovementsScreenState extends State<StockMovementsScreen> {
         ),
         const SizedBox(width: 16),
         IconButton(
-          onPressed: _currentPage < _totalPages ? () => setState(() => _currentPage++) : null,
+          onPressed:
+              _currentPage < _totalPages
+                  ? () => setState(() => _currentPage++)
+                  : null,
           icon: const Icon(Icons.chevron_right),
           color: _currentPage < _totalPages ? Colors.blue : Colors.grey,
         ),

@@ -89,6 +89,25 @@ class CreditSalesService {
     }
   }
 
+  Future<int> getProfitByYear(int year) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/credit-sales/profit/$year'),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return (data['profit'] as num).toInt();
+      } else {
+        throw Exception('Failed to load profit: ${response.body}');
+      }
+    } catch (e) {
+      print('Error loading credit sales profit: $e');
+      return 0;
+    }
+  }
+
   Future<void> checkAndUpdateStatuses() async {
     try {
       final headers = await _getHeaders();

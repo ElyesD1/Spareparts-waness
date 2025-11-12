@@ -39,7 +39,8 @@ class _MarketScreenState extends State<MarketScreen> {
   // Debug flag - set to true to see image loading debug info
   static const bool _debugImages = false;
 
-  bool _isMobile(BuildContext context) => MediaQuery.of(context).size.width < 600;
+  bool _isMobile(BuildContext context) =>
+      MediaQuery.of(context).size.width < 600;
 
   @override
   void initState() {
@@ -54,9 +55,13 @@ class _MarketScreenState extends State<MarketScreen> {
 
     try {
       final productStocks = await _productStockService.getAllProductStocks();
-      final productsInStock = productStocks.where((productStock) =>
-        productStock.quantity > 0 && productStock.product != null
-      ).toList();
+      final productsInStock =
+          productStocks
+              .where(
+                (productStock) =>
+                    productStock.quantity > 0 && productStock.product != null,
+              )
+              .toList();
 
       // Group products by product ID
       final grouped = _groupProductsByProduct(productsInStock);
@@ -69,16 +74,18 @@ class _MarketScreenState extends State<MarketScreen> {
     } catch (e) {
       setState(() => _loading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
       }
     }
   }
 
-  List<GroupedProduct> _groupProductsByProduct(List<ProductStock> productStocks) {
+  List<GroupedProduct> _groupProductsByProduct(
+    List<ProductStock> productStocks,
+  ) {
     final Map<String, List<ProductStock>> grouped = {};
-    
+
     for (final stock in productStocks) {
       if (stock.product != null && stock.product!.id != null) {
         final productId = stock.product!.id!;
@@ -92,11 +99,19 @@ class _MarketScreenState extends State<MarketScreen> {
     return grouped.entries.map((entry) {
       final stockEntries = entry.value;
       final product = stockEntries.first.product!;
-      final totalQuantity = stockEntries.fold(0, (sum, stock) => sum + stock.quantity);
-      final warehouseNames = stockEntries
-          .map((stock) => stock.warehouse?['name']?.toString() ?? 'Warehouse ${stock.warehouseId}')
-          .cast<String>()
-          .toList();
+      final totalQuantity = stockEntries.fold(
+        0,
+        (sum, stock) => sum + stock.quantity,
+      );
+      final warehouseNames =
+          stockEntries
+              .map(
+                (stock) =>
+                    stock.warehouse?['name']?.toString() ??
+                    'Warehouse ${stock.warehouseId}',
+              )
+              .cast<String>()
+              .toList();
 
       return GroupedProduct(
         product: product,
@@ -110,27 +125,35 @@ class _MarketScreenState extends State<MarketScreen> {
   void _filterProducts() {
     setState(() {
       // Filter grouped products
-      _filteredGroupedProducts = _groupedProducts.where((groupedProduct) {
-        final product = groupedProduct.product;
+      _filteredGroupedProducts =
+          _groupedProducts.where((groupedProduct) {
+            final product = groupedProduct.product;
 
-        final matchesSearch = _search.isEmpty ||
-          product.name.toLowerCase().contains(_search.toLowerCase()) ||
-          product.referenceCode.toLowerCase().contains(_search.toLowerCase());
+            final matchesSearch =
+                _search.isEmpty ||
+                product.name.toLowerCase().contains(_search.toLowerCase()) ||
+                product.referenceCode.toLowerCase().contains(
+                  _search.toLowerCase(),
+                );
 
-        final matchesCategory = _selectedCategory == 'all' ||
-          (product.category != null && product.category!.toLowerCase() == _selectedCategory.toLowerCase());
+            final matchesCategory =
+                _selectedCategory == 'all' ||
+                (product.category != null &&
+                    product.category!.toLowerCase() ==
+                        _selectedCategory.toLowerCase());
 
-        return matchesSearch && matchesCategory;
-      }).toList();
+            return matchesSearch && matchesCategory;
+          }).toList();
     });
   }
 
   List<String> _getCategories() {
-    final categories = _groupedProducts
-        .where((gp) => gp.product.category != null)
-        .map((gp) => gp.product.category!)
-        .toSet()
-        .toList();
+    final categories =
+        _groupedProducts
+            .where((gp) => gp.product.category != null)
+            .map((gp) => gp.product.category!)
+            .toSet()
+            .toList();
     categories.sort();
     return ['all', ...categories];
   }
@@ -139,10 +162,14 @@ class _MarketScreenState extends State<MarketScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      drawer: _isMobile(context) ? const Sidebar(selected: SidebarSection.market) : null,
+      drawer:
+          _isMobile(context)
+              ? const Sidebar(selected: SidebarSection.market)
+              : null,
       body: Row(
         children: [
-          if (!_isMobile(context)) const Sidebar(selected: SidebarSection.market),
+          if (!_isMobile(context))
+            const Sidebar(selected: SidebarSection.market),
           Expanded(
             child: Column(
               children: [
@@ -152,9 +179,10 @@ class _MarketScreenState extends State<MarketScreen> {
                   _buildMobileHeader(),
                 if (_debugImages) _buildDebugPanel(),
                 Expanded(
-                  child: _isMobile(context)
-                      ? _buildMobileLayout()
-                      : _buildDesktopLayout(),
+                  child:
+                      _isMobile(context)
+                          ? _buildMobileLayout()
+                          : _buildDesktopLayout(),
                 ),
               ],
             ),
@@ -196,10 +224,7 @@ class _MarketScreenState extends State<MarketScreen> {
             '• Backend server is running (localhost:3000)\n'
             '• Image files exist in uploads/products/\n'
             '• Image URLs in database are correct',
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.orange[600],
-            ),
+            style: TextStyle(fontSize: 11, color: Colors.orange[600]),
           ),
         ],
       ),
@@ -223,10 +248,11 @@ class _MarketScreenState extends State<MarketScreen> {
         child: Row(
           children: [
             Builder(
-              builder: (context) => IconButton(
-                icon: const Icon(Icons.menu, color: Colors.black87),
-                onPressed: () => Scaffold.of(context).openDrawer(),
-              ),
+              builder:
+                  (context) => IconButton(
+                    icon: const Icon(Icons.menu, color: Colors.black87),
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                  ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -244,241 +270,23 @@ class _MarketScreenState extends State<MarketScreen> {
                   ),
                   Text(
                     'Marché des produits',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            // User profile section
-            GestureDetector(
-              onTap: () => _showUserProfile(),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: Colors.green[400],
-                      radius: 16,
-                      child: const Icon(Icons.person, color: Colors.white, size: 18),
-                    ),
-                    const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Invité',
-                          style: TextStyle(
-                            color: Colors.green[700],
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          'Guest',
-                          style: TextStyle(
-                            color: Colors.green[600],
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+            // User profile section - simplified
+            Text(
+              'hasen',
+              style: TextStyle(
+                color: Colors.grey[700],
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showUserProfile() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _buildUserProfileModal(),
-    );
-  }
-
-  Widget _buildUserProfileModal() {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.6,
-      maxChildSize: 0.8,
-      minChildSize: 0.4,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      // Profile Avatar
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Colors.green[400]!, Colors.green[600]!],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.person,
-                          color: Colors.white,
-                          size: 40,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      
-                      // User Info
-                      const Text(
-                        'Maram',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      
-                      // Profile Options
-                      _buildProfileOption(
-                        icon: Icons.person_outline,
-                        title: 'Informations du profil',
-                        subtitle: 'Voir les détails du compte',
-                        onTap: () {},
-                      ),
-                      _buildProfileOption(
-                        icon: Icons.history,
-                        title: 'Historique',
-                        subtitle: 'Voir l\'activité récente',
-                        onTap: () {},
-                      ),
-                      _buildProfileOption(
-                        icon: Icons.settings,
-                        title: 'Paramètres',
-                        subtitle: 'Configurer l\'application',
-                        onTap: () {},
-                      ),
-                      _buildProfileOption(
-                        icon: Icons.help_outline,
-                        title: 'Aide & Support',
-                        subtitle: 'Obtenir de l\'aide',
-                        onTap: () {},
-                      ),
-                      _buildProfileOption(
-                        icon: Icons.info_outline,
-                        title: 'À propos',
-                        subtitle: 'Version et informations',
-                        onTap: () {},
-                      ),
-                      const SizedBox(height: 20),
-                      
-                      // Logout Button
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.red.withOpacity(0.3)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.logout, color: Colors.red[600], size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Se déconnecter',
-                              style: TextStyle(
-                                color: Colors.red[600],
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildProfileOption({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        onTap: onTap,
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.green.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: Colors.green[600], size: 20),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(
-            fontSize: 13,
-            color: Colors.grey[600],
-          ),
-        ),
-        trailing: Icon(
-          Icons.arrow_forward_ios,
-          color: Colors.grey[400],
-          size: 16,
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 0),
       ),
     );
   }
@@ -513,7 +321,10 @@ class _MarketScreenState extends State<MarketScreen> {
                     ),
                     filled: true,
                     fillColor: Colors.grey[100],
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
                   onChanged: (value) {
                     setState(() => _search = value);
@@ -527,17 +338,19 @@ class _MarketScreenState extends State<MarketScreen> {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  children: _getCategories().map((category) {
-                    final isSelected = _selectedCategory == category;
-                    final displayName = category == 'all' ? 'Tous' : category;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: _buildFilterChip(displayName, isSelected, () {
-                        setState(() => _selectedCategory = category);
-                        _filterProducts();
-                      }),
-                    );
-                  }).toList(),
+                  children:
+                      _getCategories().map((category) {
+                        final isSelected = _selectedCategory == category;
+                        final displayName =
+                            category == 'all' ? 'Tous' : category;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: _buildFilterChip(displayName, isSelected, () {
+                            setState(() => _selectedCategory = category);
+                            _filterProducts();
+                          }),
+                        );
+                      }).toList(),
                 ),
               ),
             ],
@@ -592,34 +405,13 @@ class _MarketScreenState extends State<MarketScreen> {
             ),
           ),
           const Spacer(),
-          GestureDetector(
-            onTap: _showUserProfile,
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: Colors.green,
-                  child: const Text(
-                    'M',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Maram',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
-              ],
+          // User name display - simplified
+          Text(
+            'hasen',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
+              color: Colors.black87,
             ),
           ),
         ],
@@ -657,7 +449,10 @@ class _MarketScreenState extends State<MarketScreen> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.green),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
               onChanged: (value) {
                 setState(() => _search = value);
@@ -680,12 +475,20 @@ class _MarketScreenState extends State<MarketScreen> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.green),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
-              items: _getCategories().map((category) {
-                final displayName = category == 'all' ? 'Toutes les catégories' : category;
-                return DropdownMenuItem(value: category, child: Text(displayName));
-              }).toList(),
+              items:
+                  _getCategories().map((category) {
+                    final displayName =
+                        category == 'all' ? 'Toutes les catégories' : category;
+                    return DropdownMenuItem(
+                      value: category,
+                      child: Text(displayName),
+                    );
+                  }).toList(),
               onChanged: (value) {
                 setState(() => _selectedCategory = value!);
                 _filterProducts();
@@ -722,9 +525,7 @@ class _MarketScreenState extends State<MarketScreen> {
   }
 
   Widget _buildLoadingState() {
-    return const Center(
-      child: CircularProgressIndicator(),
-    );
+    return const Center(child: CircularProgressIndicator());
   }
 
   Widget _buildProductsShopList() {
@@ -746,10 +547,7 @@ class _MarketScreenState extends State<MarketScreen> {
             const SizedBox(height: 8),
             Text(
               'Essayez de modifier vos filtres',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
               textAlign: TextAlign.center,
             ),
           ],
@@ -786,10 +584,7 @@ class _MarketScreenState extends State<MarketScreen> {
             const SizedBox(height: 8),
             Text(
               'Essayez de modifier vos filtres',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
               textAlign: TextAlign.center,
             ),
           ],
@@ -812,11 +607,17 @@ class _MarketScreenState extends State<MarketScreen> {
     );
   }
 
-  Widget _buildShopProductCard(GroupedProduct groupedProduct, {bool desktop = false}) {
+  Widget _buildShopProductCard(
+    GroupedProduct groupedProduct, {
+    bool desktop = false,
+  }) {
     final product = groupedProduct.product;
 
     return Container(
-      margin: desktop ? null : const EdgeInsets.symmetric(vertical: 7, horizontal: 6),
+      margin:
+          desktop
+              ? null
+              : const EdgeInsets.symmetric(vertical: 7, horizontal: 6),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -836,9 +637,13 @@ class _MarketScreenState extends State<MarketScreen> {
           }
         },
         child: Padding(
-          padding: desktop ? const EdgeInsets.all(20) : const EdgeInsets.all(14),
+          padding:
+              desktop ? const EdgeInsets.all(20) : const EdgeInsets.all(14),
           child: SizedBox(
-            height: desktop ? 320 : 240, // Increased height to accommodate warehouse info
+            height:
+                desktop
+                    ? 320
+                    : 240, // Increased height to accommodate warehouse info
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -876,49 +681,60 @@ class _MarketScreenState extends State<MarketScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'Réf: ${product.referenceCode.isEmpty ? 'N/A' : product.referenceCode}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 8),
                 // Warehouse information
                 _buildWarehouseInfo(groupedProduct, desktop),
                 const Spacer(),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.11),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '${NumberFormat.currency(locale: 'fr', symbol: ' TND').format(product.unitPrice)}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: Colors.green,
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.11),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${NumberFormat.currency(locale: 'fr', symbol: ' TND').format(product.unitPrice)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: Colors.green,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
-                        color: groupedProduct.totalQuantity > 0
-                            ? Colors.green.withOpacity(0.08)
-                            : Colors.red.withOpacity(0.11),
+                        color:
+                            groupedProduct.totalQuantity > 0
+                                ? Colors.green.withOpacity(0.08)
+                                : Colors.red.withOpacity(0.11),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        groupedProduct.totalQuantity > 0 ? 'IN STOCK' : 'ÉPUISÉ',
+                        groupedProduct.totalQuantity > 0
+                            ? 'IN STOCK'
+                            : 'ÉPUISÉ',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: groupedProduct.totalQuantity > 0
-                              ? Colors.green
-                              : Colors.red,
+                          color:
+                              groupedProduct.totalQuantity > 0
+                                  ? Colors.green
+                                  : Colors.red,
                         ),
                       ),
                     ),
@@ -958,23 +774,27 @@ class _MarketScreenState extends State<MarketScreen> {
         Wrap(
           spacing: 4,
           runSpacing: 2,
-          children: groupedProduct.warehouseNames.map((warehouseName) {
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                warehouseName,
-                style: TextStyle(
-                  fontSize: desktop ? 10 : 9,
-                  color: Colors.blue[700],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            );
-          }).toList(),
+          children:
+              groupedProduct.warehouseNames.map((warehouseName) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    warehouseName,
+                    style: TextStyle(
+                      fontSize: desktop ? 10 : 9,
+                      color: Colors.blue[700],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                );
+              }).toList(),
         ),
       ],
     );
@@ -991,7 +811,7 @@ class _MarketScreenState extends State<MarketScreen> {
 
   Widget _buildProductProfileModal(GroupedProduct groupedProduct) {
     final product = groupedProduct.product;
-    
+
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
       maxChildSize: 0.9,
@@ -1033,7 +853,7 @@ class _MarketScreenState extends State<MarketScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // Product Name
                       Text(
                         product.name,
@@ -1044,11 +864,15 @@ class _MarketScreenState extends State<MarketScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      
+
                       // Category and Reference
                       Row(
                         children: [
-                          Icon(Icons.category, size: 16, color: Colors.orange[700]),
+                          Icon(
+                            Icons.category,
+                            size: 16,
+                            color: Colors.orange[700],
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             product.category ?? 'Sans catégorie',
@@ -1061,10 +885,14 @@ class _MarketScreenState extends State<MarketScreen> {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      
+
                       Row(
                         children: [
-                          Icon(Icons.qr_code, size: 16, color: Colors.grey[600]),
+                          Icon(
+                            Icons.qr_code,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'Réf: ${product.referenceCode}',
@@ -1076,7 +904,7 @@ class _MarketScreenState extends State<MarketScreen> {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // Price
                       Container(
                         padding: const EdgeInsets.all(16),
@@ -1086,7 +914,10 @@ class _MarketScreenState extends State<MarketScreen> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.monetization_on, color: Colors.green[700]),
+                            Icon(
+                              Icons.monetization_on,
+                              color: Colors.green[700],
+                            ),
                             const SizedBox(width: 12),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1099,7 +930,10 @@ class _MarketScreenState extends State<MarketScreen> {
                                   ),
                                 ),
                                 Text(
-                                  NumberFormat.currency(locale: 'fr', symbol: ' TND').format(product.unitPrice),
+                                  NumberFormat.currency(
+                                    locale: 'fr',
+                                    symbol: ' TND',
+                                  ).format(product.unitPrice),
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
@@ -1112,21 +946,27 @@ class _MarketScreenState extends State<MarketScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // Stock Status
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: groupedProduct.totalQuantity > 0 
-                              ? Colors.green.withOpacity(0.1)
-                              : Colors.red.withOpacity(0.1),
+                          color:
+                              groupedProduct.totalQuantity > 0
+                                  ? Colors.green.withOpacity(0.1)
+                                  : Colors.red.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           children: [
                             Icon(
-                              groupedProduct.totalQuantity > 0 ? Icons.check_circle : Icons.cancel,
-                              color: groupedProduct.totalQuantity > 0 ? Colors.green[700] : Colors.red[700],
+                              groupedProduct.totalQuantity > 0
+                                  ? Icons.check_circle
+                                  : Icons.cancel,
+                              color:
+                                  groupedProduct.totalQuantity > 0
+                                      ? Colors.green[700]
+                                      : Colors.red[700],
                             ),
                             const SizedBox(width: 12),
                             Column(
@@ -1140,11 +980,16 @@ class _MarketScreenState extends State<MarketScreen> {
                                   ),
                                 ),
                                 Text(
-                                  groupedProduct.totalQuantity > 0 ? 'EN STOCK' : 'ÉPUISÉ',
+                                  groupedProduct.totalQuantity > 0
+                                      ? 'EN STOCK'
+                                      : 'ÉPUISÉ',
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: groupedProduct.totalQuantity > 0 ? Colors.green[700] : Colors.red[700],
+                                    color:
+                                        groupedProduct.totalQuantity > 0
+                                            ? Colors.green[700]
+                                            : Colors.red[700],
                                   ),
                                 ),
                               ],
@@ -1153,7 +998,7 @@ class _MarketScreenState extends State<MarketScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // Warehouse Details
                       const Text(
                         'Disponibilité par entrepôt',
@@ -1164,9 +1009,11 @@ class _MarketScreenState extends State<MarketScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      
+
                       ...groupedProduct.stockEntries.map((stockEntry) {
-                        final warehouseName = stockEntry.warehouse?['name'] ?? 'Entrepôt ${stockEntry.warehouseId}';
+                        final warehouseName =
+                            stockEntry.warehouse?['name'] ??
+                            'Entrepôt ${stockEntry.warehouseId}';
                         return Container(
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.all(12),
@@ -1188,17 +1035,28 @@ class _MarketScreenState extends State<MarketScreen> {
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: stockEntry.quantity > 0 ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2),
+                                  color:
+                                      stockEntry.quantity > 0
+                                          ? Colors.green.withOpacity(0.2)
+                                          : Colors.red.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  stockEntry.quantity > 0 ? 'Disponible' : 'Épuisé',
+                                  stockEntry.quantity > 0
+                                      ? 'Disponible'
+                                      : 'Épuisé',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
-                                    color: stockEntry.quantity > 0 ? Colors.green[700] : Colors.red[700],
+                                    color:
+                                        stockEntry.quantity > 0
+                                            ? Colors.green[700]
+                                            : Colors.red[700],
                                   ),
                                 ),
                               ),
@@ -1206,8 +1064,9 @@ class _MarketScreenState extends State<MarketScreen> {
                           ),
                         );
                       }).toList(),
-                      
-                      if (product.description != null && product.description!.isNotEmpty) ...[
+
+                      if (product.description != null &&
+                          product.description!.isNotEmpty) ...[
                         const SizedBox(height: 20),
                         const Text(
                           'Description',
@@ -1240,43 +1099,47 @@ class _MarketScreenState extends State<MarketScreen> {
 
   // Add a method to try multiple URL variations
   Widget _buildProductImageWithFallback(dynamic product, bool desktop) {
-    final hasValidImage = product.image != null && 
-                         product.image!.isNotEmpty && 
-                         product.image!.trim().isNotEmpty;
+    final hasValidImage =
+        product.image != null &&
+        product.image!.isNotEmpty &&
+        product.image!.trim().isNotEmpty;
 
     if (!hasValidImage) {
       return _buildFallbackIcon(desktop, 'No image available');
     }
 
     final imagePath = product.image!.trim();
-    
+
     // Check if the image path is already a full URL
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-      if (_debugImages) {
-      }
+      if (_debugImages) {}
       return _buildImageWithMultipleUrls(product, desktop, [imagePath], 0);
     }
-    
+
     // For relative paths, try different URL patterns in order of priority
     final urlsToTry = [
-      'http://localhost:3000/uploads/$imagePath',              // Try uploads/ first
-      'http://localhost:3000/uploads/products/$imagePath',     // Then uploads/products/
-      'http://localhost:3000/images/$imagePath',               // Then images/
-      'http://localhost:3000/$imagePath',                      // Finally root
+      'http://localhost:3000/uploads/$imagePath', // Try uploads/ first
+      'http://localhost:3000/uploads/products/$imagePath', // Then uploads/products/
+      'http://localhost:3000/images/$imagePath', // Then images/
+      'http://localhost:3000/$imagePath', // Finally root
     ];
 
     return _buildImageWithMultipleUrls(product, desktop, urlsToTry, 0);
   }
 
-  Widget _buildImageWithMultipleUrls(dynamic product, bool desktop, List<String> urls, int currentIndex) {
+  Widget _buildImageWithMultipleUrls(
+    dynamic product,
+    bool desktop,
+    List<String> urls,
+    int currentIndex,
+  ) {
     if (currentIndex >= urls.length) {
       return _buildFallbackIcon(desktop, 'All URLs failed');
     }
 
     final currentUrl = urls[currentIndex];
-    
-    if (_debugImages) {
-    }
+
+    if (_debugImages) {}
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -1296,18 +1159,24 @@ class _MarketScreenState extends State<MarketScreen> {
             child: CircularProgressIndicator(
               strokeWidth: 2,
               valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
-              value: loadingProgress.expectedTotalBytes != null
-                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                  : null,
+              value:
+                  loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded /
+                          loadingProgress.expectedTotalBytes!
+                      : null,
             ),
           );
         },
         errorBuilder: (context, error, stackTrace) {
-          if (_debugImages) {
-          }
-          
+          if (_debugImages) {}
+
           // Try the next URL in the list
-          return _buildImageWithMultipleUrls(product, desktop, urls, currentIndex + 1);
+          return _buildImageWithMultipleUrls(
+            product,
+            desktop,
+            urls,
+            currentIndex + 1,
+          );
         },
       ),
     );

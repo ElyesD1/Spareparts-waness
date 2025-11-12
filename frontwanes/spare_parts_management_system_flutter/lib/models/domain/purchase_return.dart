@@ -91,21 +91,39 @@ class PurchaseReturn {
     final supplierMap =
         json['supplier'] is Map
             ? (json['supplier'] as Map).cast<String, dynamic>()
-            : null;
+            : (json['supplier_id'] is Map
+                ? (json['supplier_id'] as Map).cast<String, dynamic>()
+                : null);
     final warehouseMap =
         json['warehouse'] is Map
             ? (json['warehouse'] as Map).cast<String, dynamic>()
-            : null;
+            : (json['warehouse_id'] is Map
+                ? (json['warehouse_id'] as Map).cast<String, dynamic>()
+                : null);
     final createdByMap =
         json['createdBy'] is Map
             ? (json['createdBy'] as Map).cast<String, dynamic>()
-            : null;
+            : (json['created_by'] is Map
+                ? (json['created_by'] as Map).cast<String, dynamic>()
+                : null);
 
     return PurchaseReturn(
       id: json['_id']?.toString() ?? json['id']?.toString(),
-      supplierId: json['supplier_id']?.toString() ?? '',
-      warehouseId: json['warehouse_id']?.toString() ?? '',
-      createdBy: json['created_by']?.toString() ?? '',
+      supplierId:
+          supplierMap?['_id']?.toString() ??
+          supplierMap?['id']?.toString() ??
+          json['supplier_id']?.toString() ??
+          '',
+      warehouseId:
+          warehouseMap?['_id']?.toString() ??
+          warehouseMap?['id']?.toString() ??
+          json['warehouse_id']?.toString() ??
+          '',
+      createdBy:
+          createdByMap?['_id']?.toString() ??
+          createdByMap?['id']?.toString() ??
+          json['created_by']?.toString() ??
+          '',
       returnDate: DateTime.parse(json['return_date'] as String),
       totalAmount: parseDouble(json['total_amount']),
       reason: json['reason'] as String? ?? '',

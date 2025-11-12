@@ -8,6 +8,8 @@ import '../../models/domain/user.dart';
 import '../../services/warehouse_service.dart';
 import '../../services/user_service.dart';
 import '../../services/purchase_service.dart';
+import '../../services/customers_service.dart';
+import '../../services/supplier_service.dart';
 import '../widgets/sidebar.dart';
 import '../widgets/app_toast.dart';
 
@@ -276,38 +278,125 @@ class _StockMovementListScreenState extends State<StockMovementListScreen> {
     if (movement.note != null && movement.note!.isNotEmpty) {
       final note = movement.note!;
 
-      // Extract customer name for sales - try different patterns
+      // Extract customer name for sales
       if (isSale) {
-        // Try "Vente: name" pattern first
-        final venteMatch = RegExp(r'Vente:\s*([^-]+)').firstMatch(note);
-        if (venteMatch != null) {
-          customerName = venteMatch.group(1)?.trim();
-        } else {
-          // Try "Client: name" pattern as fallback
+        // First try to extract customer ID from note and fetch actual name
+        final customerIdMatch = RegExp(
+          r'Client ID:\s*([a-f0-9]{24})',
+          caseSensitive: false,
+        ).firstMatch(note);
+
+        if (customerIdMatch != null) {
+          final customerId = customerIdMatch.group(1);
+          if (customerId != null) {
+            try {
+              // Fetch customer details by ID
+              final customer = await CustomersService.getCustomerById(
+                customerId,
+              );
+              customerName = customer.name;
+            } catch (e) {
+              print('[MOVEMENT DETAILS] Error fetching customer: $e');
+              // Fallback: try to extract name from other patterns
+            }
+          }
+        }
+
+        // If no customer name yet, try to extract from "Vente: actual_name" pattern
+        if (customerName == null) {
+          final venteNameMatch = RegExp(
+            r'Vente:\s*([A-Za-zÀ-ÿ\s]+?)(?:\s*-|\s*\(|\s+ID|$)',
+            caseSensitive: false,
+          ).firstMatch(note);
+
+          if (venteNameMatch != null) {
+            var extractedName = venteNameMatch.group(1)?.trim() ?? '';
+            if (extractedName.isNotEmpty &&
+                !extractedName.toLowerCase().contains('crédit') &&
+                !extractedName.toLowerCase().contains('à')) {
+              customerName = extractedName;
+            }
+          }
+        }
+
+        // If still no customer name and note doesn't contain "Client ID:", try "Client: name" pattern
+        if (customerName == null && !note.contains('Client ID:')) {
           final customerMatch = RegExp(
-            r'Client\s*:?\s*([^-]+)',
+            r'Client\s*:?\s*([A-Za-zÀ-ÿ\s]+?)(?:\s*-|\s*\(|\s+ID|$)',
+            caseSensitive: false,
           ).firstMatch(note);
           if (customerMatch != null) {
-            customerName = customerMatch.group(1)?.trim();
+            var extractedName = customerMatch.group(1)?.trim() ?? '';
+            if (extractedName.isNotEmpty) {
+              customerName = extractedName;
+            }
           }
+        }
+
+        // Final validation: If we extracted something that looks like an ID, discard it
+        if (customerName != null &&
+            (customerName.toUpperCase().contains('ID') ||
+                RegExp(r'[a-f0-9]{10,}').hasMatch(customerName))) {
+          customerName = null;
         }
       }
 
       // Note: Removed note-based extraction for purchases since we now fetch from purchase record
 
       // Extract supplier name for returns
-      if (isRetour && note.contains('Fournisseur:')) {
-        final supplierMatch = RegExp(
-          r'Fournisseur:\s*([^-]+)',
+      if (isRetour) {
+        // First try to extract supplier ID from note and fetch actual name
+        final supplierIdMatch = RegExp(
+          r'Fournisseur ID:\s*([a-f0-9]{24})',
+          caseSensitive: false,
         ).firstMatch(note);
-        if (supplierMatch != null) {
-          supplierName = supplierMatch.group(1)?.trim();
+
+        if (supplierIdMatch != null) {
+          final supplierId = supplierIdMatch.group(1);
+          if (supplierId != null) {
+            try {
+              // Fetch all suppliers and find the matching one
+              final supplierService = SupplierService();
+              final suppliers = await supplierService.getSuppliers();
+              final supplier = suppliers.firstWhere(
+                (s) =>
+                    s['_id']?.toString() == supplierId ||
+                    s['id']?.toString() == supplierId,
+                orElse: () => <String, dynamic>{},
+              );
+              if (supplier.isNotEmpty && supplier['name'] != null) {
+                supplierName = supplier['name'].toString();
+              }
+            } catch (e) {
+              print('[MOVEMENT DETAILS] Error fetching supplier: $e');
+              // Fallback: try to extract name from other patterns
+            }
+          }
+        }
+
+        // If no supplier name yet, try to extract from "Fournisseur: name" pattern
+        if (supplierName == null && note.contains('Fournisseur:')) {
+          final supplierMatch = RegExp(
+            r'Fournisseur:\s*([A-Za-zÀ-ÿ\s]+?)(?:\s*-|\s*\(|\s+ID|$)',
+            caseSensitive: false,
+          ).firstMatch(note);
+          if (supplierMatch != null) {
+            var extractedName = supplierMatch.group(1)?.trim() ?? '';
+            // If the name contains "ID" or looks like an ObjectId, skip it
+            if (extractedName.isNotEmpty &&
+                !extractedName.toUpperCase().contains('ID') &&
+                !RegExp(r'[a-f0-9]{10,}').hasMatch(extractedName)) {
+              supplierName = extractedName;
+            }
+          }
         }
       }
 
       // Extract reason for returns
       if (isRetour && note.contains('Raison:')) {
-        final reasonMatch = RegExp(r'Raison:\s*([^-]+)').firstMatch(note);
+        final reasonMatch = RegExp(
+          r'Raison:\s*(.+?)(?:\s*-|\s*\(|$)',
+        ).firstMatch(note);
         if (reasonMatch != null) {
           reason = reasonMatch.group(1)?.trim();
         }
@@ -323,6 +412,149 @@ class _StockMovementListScreenState extends State<StockMovementListScreen> {
             total = price * movement.quantity;
           }
         }
+      }
+    }
+
+    // Fetch warehouse names if we have IDs but no names yet
+    String? fetchedFromWarehouseName;
+    String? fetchedToWarehouseName;
+
+    if (isTransfer) {
+      // Try to extract warehouse IDs from note if available
+      if (movement.note != null && movement.note!.isNotEmpty) {
+        final warehousePattern = RegExp(
+          r'warehouse\s+([a-f0-9]{24})',
+          caseSensitive: false,
+        );
+        final matches = warehousePattern.allMatches(movement.note!).toList();
+
+        if (matches.length >= 2) {
+          // First match is "from", second is "to"
+          final fromWarehouseId = matches[0].group(1);
+          final toWarehouseId = matches[1].group(1);
+
+          try {
+            final warehouseService = WarehouseService();
+            final warehouses = await warehouseService.getWarehouses();
+
+            // Fetch source warehouse name
+            if (fromWarehouseId != null) {
+              final fromWarehouse = warehouses.firstWhere(
+                (w) =>
+                    w['_id']?.toString() == fromWarehouseId ||
+                    w['id']?.toString() == fromWarehouseId,
+                orElse: () => <String, dynamic>{},
+              );
+              if (fromWarehouse.isNotEmpty && fromWarehouse['name'] != null) {
+                fetchedFromWarehouseName = fromWarehouse['name'].toString();
+              }
+            }
+
+            // Fetch destination warehouse name
+            if (toWarehouseId != null) {
+              final toWarehouse = warehouses.firstWhere(
+                (w) =>
+                    w['_id']?.toString() == toWarehouseId ||
+                    w['id']?.toString() == toWarehouseId,
+                orElse: () => <String, dynamic>{},
+              );
+              if (toWarehouse.isNotEmpty && toWarehouse['name'] != null) {
+                fetchedToWarehouseName = toWarehouse['name'].toString();
+              }
+            }
+          } catch (e) {
+            print('[MOVEMENT DETAILS] Error fetching warehouses: $e');
+          }
+        }
+      }
+
+      // Also try using warehouse IDs directly from movement if note didn't work
+      if (fetchedFromWarehouseName == null &&
+          movement.fromWarehouseId != null) {
+        try {
+          final warehouseService = WarehouseService();
+          final warehouses = await warehouseService.getWarehouses();
+          final warehouse = warehouses.firstWhere(
+            (w) =>
+                w['_id']?.toString() == movement.fromWarehouseId ||
+                w['id']?.toString() == movement.fromWarehouseId,
+            orElse: () => <String, dynamic>{},
+          );
+          if (warehouse.isNotEmpty && warehouse['name'] != null) {
+            fetchedFromWarehouseName = warehouse['name'].toString();
+          }
+        } catch (e) {
+          print('[MOVEMENT DETAILS] Error fetching source warehouse: $e');
+        }
+      }
+
+      if (fetchedToWarehouseName == null && movement.toWarehouseId != null) {
+        try {
+          final warehouseService = WarehouseService();
+          final warehouses = await warehouseService.getWarehouses();
+          final warehouse = warehouses.firstWhere(
+            (w) =>
+                w['_id']?.toString() == movement.toWarehouseId ||
+                w['id']?.toString() == movement.toWarehouseId,
+            orElse: () => <String, dynamic>{},
+          );
+          if (warehouse.isNotEmpty && warehouse['name'] != null) {
+            fetchedToWarehouseName = warehouse['name'].toString();
+          }
+        } catch (e) {
+          print('[MOVEMENT DETAILS] Error fetching destination warehouse: $e');
+        }
+      }
+    }
+
+    // Create a cleaned-up note for display (replace IDs with names)
+    String? displayNote = movement.note;
+    if (displayNote != null && displayNote.isNotEmpty) {
+      // Replace warehouse IDs with names in the note
+      if (isTransfer &&
+          fetchedFromWarehouseName != null &&
+          fetchedToWarehouseName != null) {
+        // Replace the warehouse ID patterns with actual names
+        final warehousePattern = RegExp(
+          r'warehouse\s+([a-f0-9]{24})',
+          caseSensitive: false,
+        );
+        final matches = warehousePattern.allMatches(displayNote).toList();
+
+        if (matches.length >= 2) {
+          // Replace in reverse order to maintain string positions
+          final fromId = matches[0].group(1);
+          final toId = matches[1].group(1);
+
+          // Replace second occurrence (destination) first
+          displayNote = displayNote.replaceFirst(
+            'warehouse $toId',
+            fetchedToWarehouseName,
+            matches[1].start,
+          );
+
+          // Replace first occurrence (source)
+          displayNote = displayNote.replaceFirst(
+            'warehouse $fromId',
+            fetchedFromWarehouseName,
+          );
+        }
+      }
+
+      // Replace customer ID with name in sales
+      if (isSale && customerName != null) {
+        displayNote = displayNote.replaceAllMapped(
+          RegExp(r'Client ID:\s*[a-f0-9]{24}', caseSensitive: false),
+          (match) => 'Client: $customerName',
+        );
+      }
+
+      // Replace supplier ID with name in returns
+      if (isRetour && supplierName != null) {
+        displayNote = displayNote.replaceAllMapped(
+          RegExp(r'Fournisseur ID:\s*[a-f0-9]{24}', caseSensitive: false),
+          (match) => 'Fournisseur: $supplierName',
+        );
       }
     }
 
@@ -476,7 +708,11 @@ class _StockMovementListScreenState extends State<StockMovementListScreen> {
 
                         // Warehouse Information Section
                         if (isTransfer) ...[
-                          _buildTransferDetails(movement),
+                          _buildTransferDetails(
+                            movement,
+                            fromWarehouseName: fetchedFromWarehouseName,
+                            toWarehouseName: fetchedToWarehouseName,
+                          ),
                           const SizedBox(height: 20),
                         ],
 
@@ -902,13 +1138,13 @@ class _StockMovementListScreenState extends State<StockMovementListScreen> {
                               ],
 
                               // General information
-                              if (movement.note != null &&
-                                  movement.note!.isNotEmpty &&
+                              if (displayNote != null &&
+                                  displayNote.isNotEmpty &&
                                   !isPurchase &&
                                   !isRetour)
                                 _buildDetailRow(
                                   'Notes',
-                                  movement.note!,
+                                  displayNote,
                                   Icons.notes,
                                 ),
                             ],
@@ -1045,20 +1281,25 @@ class _StockMovementListScreenState extends State<StockMovementListScreen> {
     );
   }
 
-  Widget _buildTransferDetails(StockMovement movement) {
-    // Simple transfer info without warehouse lookups
+  Widget _buildTransferDetails(
+    StockMovement movement, {
+    String? fromWarehouseName,
+    String? toWarehouseName,
+  }) {
+    // Use fetched names if available, otherwise fallback to movement's names
+    final displayFromName =
+        fromWarehouseName ?? movement.fromWarehouseName ?? 'Dépôt source';
+    final displayToName =
+        toWarehouseName ?? movement.toWarehouseName ?? 'Dépôt destination';
+
     return Column(
       children: [
         _buildInfoRow(
           'Transfert de',
-          movement.fromWarehouseName ?? 'Dépôt source',
+          displayFromName,
           Icons.warehouse_outlined,
         ),
-        _buildInfoRow(
-          'Transfert vers',
-          movement.toWarehouseName ?? 'Dépôt destination',
-          Icons.warehouse,
-        ),
+        _buildInfoRow('Transfert vers', displayToName, Icons.warehouse),
       ],
     );
   }

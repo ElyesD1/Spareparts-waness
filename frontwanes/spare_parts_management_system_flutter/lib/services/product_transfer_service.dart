@@ -234,8 +234,7 @@ class ProductTransferService {
       case 'admin':
         return true; // Admin can transfer from any warehouse
       case 'manager':
-        return userWarehouseId ==
-            fromWarehouseId; // Manager can only transfer from their warehouse
+        return true; // Manager can transfer from any warehouse (same as admin)
       case 'cashier':
         return userWarehouseId ==
             fromWarehouseId; // Cashier can only request from their warehouse
@@ -253,8 +252,7 @@ class ProductTransferService {
       case 'admin':
         return true; // Admin can approve any transfer
       case 'manager':
-        return userWarehouseId ==
-            toWarehouseId; // Manager can approve transfers to their warehouse
+        return true; // Manager can approve any transfer (same as admin)
       default:
         return false; // Cashiers cannot approve
     }
@@ -265,6 +263,6 @@ class ProductTransferService {
   }
 
   static bool canViewAllTransfers(String userRole) {
-    return userRole == 'admin';
+    return userRole == 'admin' || userRole == 'manager';
   }
 }

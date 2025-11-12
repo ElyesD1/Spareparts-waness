@@ -82,11 +82,15 @@ export class PurchaseReturnsService {
         .find({ purchase_return_id: new Types.ObjectId(id) })
         .toArray();
 
+      // Extract warehouse ID and supplier ID - they're populated so they're objects
+      const warehouseId = purchaseReturn.warehouse_id?._id?.toString() || purchaseReturn.warehouse_id?.toString();
+      const supplierId = purchaseReturn.supplier_id?._id?.toString() || purchaseReturn.supplier_id?.toString();
+
       // Decrement stock and create movements for each item
       for (const item of items) {
         await this.productStocksService.decrementStock(
           item.product_id.toString(),
-          purchaseReturn.warehouse_id.toString(),
+          warehouseId,
           item.quantity
         );
 
@@ -94,7 +98,7 @@ export class PurchaseReturnsService {
           product_id: item.product_id.toString(),
           quantity: item.quantity,
           movement_type: MovementType.RETURN,
-          from_warehouse_id: purchaseReturn.warehouse_id.toString(),
+          from_warehouse_id: warehouseId,
           user_id: userId,
           note: `Purchase return: ${purchaseReturn.reason}`,
         });
@@ -102,12 +106,11 @@ export class PurchaseReturnsService {
 
       // Create supplier credit
       const credit = new this.supplierCreditModel({
-        supplier_id: purchaseReturn.supplier_id,
-        amount: purchaseReturn.total_amount,
+        supplier_id: new Types.ObjectId(supplierId),
+        credit_amount: purchaseReturn.total_amount,
         remaining_amount: purchaseReturn.total_amount,
         source_type: CreditSourceType.PURCHASE_RETURN,
-        source_id: new Types.ObjectId(id),
-        created_by: new Types.ObjectId(userId),
+        source_id: id,
       });
 
       await credit.save();
@@ -148,12 +151,22 @@ export class PurchaseReturnsService {
     // Fetch items for each return
     const returnsWithItems = await Promise.all(
       returns.map(async (purchaseReturn) => {
+        const returnObj: any = purchaseReturn.toObject();
         const items = await this.connection.db!.collection('purchasereturnitems')
           .find({ purchase_return_id: purchaseReturn._id })
           .toArray();
 
         return {
-          ...purchaseReturn.toObject(),
+          ...returnObj,
+          id: returnObj._id.toString(),
+          supplier: returnObj.supplier_id ? {
+            id: returnObj.supplier_id._id?.toString() || returnObj.supplier_id.toString(),
+            name: returnObj.supplier_id.name || 'Unknown'
+          } : null,
+          warehouse: returnObj.warehouse_id ? {
+            id: returnObj.warehouse_id._id?.toString() || returnObj.warehouse_id.toString(),
+            name: returnObj.warehouse_id.name || 'Unknown'
+          } : null,
           items
         };
       })

@@ -51,19 +51,57 @@ export class PurchasesService {
   }
 
   async findAll(): Promise<Purchase[]> {
-    return this.purchaseModel.find()
+    const purchases = await this.purchaseModel.find()
       .populate('created_by')
       .populate('delivered_by')
       .populate('supplier_id')
       .exec();
+
+    // Fetch items for each purchase and calculate totals
+    const purchasesWithCalculatedTotals = await Promise.all(
+      purchases.map(async (purchase) => {
+        const purchaseObj: any = purchase.toObject();
+        
+        // Fetch items using purchase item service
+        const items = await this.purchaseItemService.findByPurchaseId(purchaseObj._id.toString());
+        
+        // Calculate total from items
+        const calculatedTotal = items.reduce((sum: number, item: any) => {
+          return sum + (item.quantity * item.unit_price);
+        }, 0);
+        
+        return {
+          ...purchaseObj,
+          total_amount: calculatedTotal || purchaseObj.total_amount,
+          final_amount: purchaseObj.final_amount || (calculatedTotal - (purchaseObj.credit_applied || 0)),
+        };
+      })
+    );
+
+    return purchasesWithCalculatedTotals;
   }
 
   async findOne(id: string): Promise<Purchase | null> {
-    return this.purchaseModel.findById(id)
+    const purchase = await this.purchaseModel.findById(id)
       .populate('created_by')
       .populate('delivered_by')
       .populate('supplier_id')
       .exec();
+    
+    if (!purchase) return null;
+
+    // Fetch items and calculate total
+    const items = await this.purchaseItemService.findByPurchaseId(id);
+    const calculatedTotal = items.reduce((sum: number, item: any) => {
+      return sum + (item.quantity * item.unit_price);
+    }, 0);
+
+    const purchaseObj: any = purchase.toObject();
+    return {
+      ...purchaseObj,
+      total_amount: calculatedTotal || purchaseObj.total_amount,
+      final_amount: purchaseObj.final_amount || (calculatedTotal - (purchaseObj.credit_applied || 0)),
+    } as Purchase;
   }
 
   async update(id: string, updatePurchaseDto: Partial<Purchase>): Promise<Purchase | null> {

@@ -187,6 +187,12 @@ class _SidebarState extends State<Sidebar> {
         'Stocks Produits',
         '/product-stocks',
       );
+      add(
+        SidebarSection.productTransfers,
+        Icons.transfer_within_a_station,
+        'Transferts Produits',
+        '/product-transfers',
+      );
       // TEMPORARY: Add purchase returns for testing
       add(
         SidebarSection.purchaseReturns,

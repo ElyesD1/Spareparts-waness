@@ -20,6 +20,7 @@ import '../widgets/sidebar.dart';
 import '../widgets/responsive_profile_button.dart';
 import '../../services/sales_service.dart';
 import '../../services/sale_item_service.dart';
+import '../../services/credit_sales_service.dart';
 import 'package:http/http.dart' as http;
 
 class HomeScreen extends StatefulWidget {
@@ -51,9 +52,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       // Add drawer for mobile
-      drawer: _isMobile(context) ? Drawer(
-        child: Sidebar(selected: SidebarSection.dashboard),
-      ) : null,
+      drawer:
+          _isMobile(context)
+              ? Drawer(child: Sidebar(selected: SidebarSection.dashboard))
+              : null,
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (_isMobile(context)) {
@@ -78,7 +80,10 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 20),
               // Mobile year filter below header
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -92,19 +97,26 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.calendar_today, size: 18, color: Colors.black54),
+                    const Icon(
+                      Icons.calendar_today,
+                      size: 18,
+                      color: Colors.black54,
+                    ),
                     const SizedBox(width: 8),
                     const Text('Année'),
                     const Spacer(),
                     DropdownButtonHideUnderline(
                       child: DropdownButton<int>(
                         value: _selectedYear,
-                        items: _yearOptions
-                            .map((y) => DropdownMenuItem<int>(
-                                  value: y,
-                                  child: Text(y.toString()),
-                                ))
-                            .toList(),
+                        items:
+                            _yearOptions
+                                .map(
+                                  (y) => DropdownMenuItem<int>(
+                                    value: y,
+                                    child: Text(y.toString()),
+                                  ),
+                                )
+                                .toList(),
                         onChanged: (y) {
                           if (y != null) setState(() => _selectedYear = y);
                         },
@@ -428,17 +440,18 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           // Hamburger menu button
           Builder(
-            builder: (context) => Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: IconButton(
-                onPressed: () => Scaffold.of(context).openDrawer(),
-                icon: const Icon(Icons.menu, color: Colors.white, size: 24),
-                tooltip: 'Ouvrir le menu',
-              ),
-            ),
+            builder:
+                (context) => Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                    icon: const Icon(Icons.menu, color: Colors.white, size: 24),
+                    tooltip: 'Ouvrir le menu',
+                  ),
+                ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -1342,10 +1355,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<int> _calculateTotalProfit() async {
     try {
       final sales = await SalesService().getSales();
-      final filteredSales = sales.where((s) {
-        final d = DateTime.tryParse(s['sale_date'] ?? '');
-        return d != null && d.year == _selectedYear;
-      }).toList();
+      final filteredSales =
+          sales.where((s) {
+            final d = DateTime.tryParse(s['sale_date'] ?? '');
+            return d != null && d.year == _selectedYear;
+          }).toList();
       double totalProfit = 0;
 
       for (final sale in filteredSales) {
@@ -1368,6 +1382,17 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
 
+      // Add profit from credit sales
+      try {
+        final creditSalesProfit = await CreditSalesService().getProfitByYear(
+          _selectedYear,
+        );
+        totalProfit += creditSalesProfit;
+      } catch (e) {
+        print('Error calculating credit sales profit: $e');
+        // Continue with just regular sales profit
+      }
+
       return totalProfit.toInt();
     } catch (e) {
       return 0;
@@ -1377,12 +1402,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<int> _getSalesCountForYear() async {
     try {
       final sales = await SalesService().getSales();
-      return sales
-          .where((s) {
-            final d = DateTime.tryParse(s['sale_date'] ?? '');
-            return d != null && d.year == _selectedYear;
-          })
-          .length;
+      return sales.where((s) {
+        final d = DateTime.tryParse(s['sale_date'] ?? '');
+        return d != null && d.year == _selectedYear;
+      }).length;
     } catch (e) {
       return 0;
     }
@@ -1401,19 +1424,24 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<FlSpot> _generateSalesSpots(List<Map<String, dynamic>> sales) {
-    final Map<int, double> monthlySales = { for (var m = 1; m <= 12; m++) m: 0 };
+    final Map<int, double> monthlySales = {for (var m = 1; m <= 12; m++) m: 0};
 
     for (final sale in sales) {
       final saleDate = DateTime.tryParse(sale['sale_date'] ?? '');
       if (saleDate != null && saleDate.year == _selectedYear) {
-        final amount = double.tryParse(sale['total_amount']?.toString() ?? '') ?? 0;
-        monthlySales[saleDate.month] = (monthlySales[saleDate.month] ?? 0) + amount;
+        final amount =
+            double.tryParse(sale['total_amount']?.toString() ?? '') ?? 0;
+        monthlySales[saleDate.month] =
+            (monthlySales[saleDate.month] ?? 0) + amount;
       }
     }
 
     final spots = <FlSpot>[];
     final months = List<int>.generate(12, (i) => i + 1);
-    double maxValue = monthlySales.values.fold(0, (max, value) => value > max ? value : max);
+    double maxValue = monthlySales.values.fold(
+      0,
+      (max, value) => value > max ? value : max,
+    );
 
     for (int i = 0; i < months.length; i++) {
       final value = monthlySales[months[i]] ?? 0;
@@ -1737,14 +1765,15 @@ class _HeaderState extends State<_Header> {
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<int>(
                     value: widget.selectedYear,
-                    items: widget.yearOptions
-                        .map(
-                          (y) => DropdownMenuItem<int>(
-                            value: y,
-                            child: Text(y.toString()),
-                          ),
-                        )
-                        .toList(),
+                    items:
+                        widget.yearOptions
+                            .map(
+                              (y) => DropdownMenuItem<int>(
+                                value: y,
+                                child: Text(y.toString()),
+                              ),
+                            )
+                            .toList(),
                     onChanged: (y) {
                       if (y != null) widget.onYearChanged(y);
                     },
@@ -1780,10 +1809,11 @@ class _DashboardStatsRow extends StatelessWidget {
   Future<int> _calculateTotalProfit() async {
     try {
       final sales = await SalesService().getSales();
-      final filteredSales = sales.where((s) {
-        final d = DateTime.tryParse(s['sale_date'] ?? '');
-        return d != null && d.year == selectedYear;
-      }).toList();
+      final filteredSales =
+          sales.where((s) {
+            final d = DateTime.tryParse(s['sale_date'] ?? '');
+            return d != null && d.year == selectedYear;
+          }).toList();
       double totalProfit = 0;
 
       for (final sale in filteredSales) {
@@ -1837,12 +1867,13 @@ class _DashboardStatsRow extends StatelessWidget {
                 'Total Ventes',
                 Icons.shopping_cart,
                 Colors.green,
-                SalesService().getSales().then((sales) => sales
-                    .where((s) {
-                      final d = DateTime.tryParse(s['sale_date'] ?? '');
-                      return d != null && d.year == selectedYear;
-                    })
-                    .length),
+                SalesService().getSales().then(
+                  (sales) =>
+                      sales.where((s) {
+                        final d = DateTime.tryParse(s['sale_date'] ?? '');
+                        return d != null && d.year == selectedYear;
+                      }).length,
+                ),
                 '+12.3%',
               ),
               const SizedBox(height: 16),
@@ -1883,12 +1914,13 @@ class _DashboardStatsRow extends StatelessWidget {
                   'Total Ventes',
                   Icons.shopping_cart,
                   Colors.green,
-                  SalesService().getSales().then((sales) => sales
-                      .where((s) {
-                        final d = DateTime.tryParse(s['sale_date'] ?? '');
-                        return d != null && d.year == selectedYear;
-                      })
-                      .length),
+                  SalesService().getSales().then(
+                    (sales) =>
+                        sales.where((s) {
+                          final d = DateTime.tryParse(s['sale_date'] ?? '');
+                          return d != null && d.year == selectedYear;
+                        }).length,
+                  ),
                   '+12.3%',
                 ),
               ),
@@ -2022,7 +2054,7 @@ class _DashboardChartsRow extends StatelessWidget {
 
 class _SalesChart extends StatelessWidget {
   final int selectedYear;
-  
+
   const _SalesChart({required this.selectedYear});
 
   Future<List<Map<String, dynamic>>> _fetchSalesData() async {
@@ -2049,8 +2081,10 @@ class _SalesChart extends StatelessWidget {
     for (final sale in sales) {
       final saleDate = DateTime.tryParse(sale['sale_date'] ?? '');
       if (saleDate != null && saleDate.year == selectedYear) {
-        final amount = double.tryParse(sale['total_amount']?.toString() ?? '') ?? 0;
-        monthlySales[saleDate.month] = (monthlySales[saleDate.month] ?? 0) + amount;
+        final amount =
+            double.tryParse(sale['total_amount']?.toString() ?? '') ?? 0;
+        monthlySales[saleDate.month] =
+            (monthlySales[saleDate.month] ?? 0) + amount;
       }
     }
 
@@ -2279,7 +2313,7 @@ class _SalesChart extends StatelessWidget {
 
 class _TopProductsChart extends StatelessWidget {
   final int selectedYear;
-  
+
   const _TopProductsChart({required this.selectedYear});
 
   Future<List<Map<String, dynamic>>> _fetchTopProducts() async {
@@ -2288,12 +2322,15 @@ class _TopProductsChart extends StatelessWidget {
       final Map<String, double> productRevenue = {};
 
       // Filter sales by selected year
-      final yearSales = sales.where((sale) {
-        final saleDate = DateTime.tryParse(sale['sale_date'] ?? '');
-        return saleDate != null && saleDate.year == selectedYear;
-      }).toList();
+      final yearSales =
+          sales.where((sale) {
+            final saleDate = DateTime.tryParse(sale['sale_date'] ?? '');
+            return saleDate != null && saleDate.year == selectedYear;
+          }).toList();
 
-      print('🔍 [TopProductsChart] Found ${yearSales.length} sales for year $selectedYear');
+      print(
+        '🔍 [TopProductsChart] Found ${yearSales.length} sales for year $selectedYear',
+      );
 
       for (final sale in yearSales) {
         try {

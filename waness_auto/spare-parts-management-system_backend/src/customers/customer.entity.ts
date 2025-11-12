@@ -8,7 +8,7 @@ export class Customer {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ unique: true, default: null })
+  @Prop({ default: null })
   email: string;
 
   @Prop({ required: true })
@@ -24,7 +24,7 @@ export class Customer {
   tax_number: string;
 
   // National Identity number (CIN)
-  @Prop({ type: Number, unique: true, sparse: true, default: null })
+  @Prop({ type: Number, default: null })
   cin: number;
 
   @Prop({ type: Number, default: 0 })

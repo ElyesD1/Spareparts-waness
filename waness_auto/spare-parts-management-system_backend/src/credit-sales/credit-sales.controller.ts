@@ -95,6 +95,16 @@ export class CreditSalesController {
     return this.creditSalesService.getStatusStatistics();
   }
 
+  @Get('profit/:year')
+  async getProfitByYear(@Param('year') year: string) {
+    const yearNumber = parseInt(year, 10);
+    if (isNaN(yearNumber)) {
+      throw new Error('Invalid year parameter');
+    }
+    const profit = await this.creditSalesService.calculateProfitByYear(yearNumber);
+    return { profit, year: yearNumber };
+  }
+
   @Get('with-calculations')
   async findAllWithCalculations() {
     return this.creditSalesService.findAll();

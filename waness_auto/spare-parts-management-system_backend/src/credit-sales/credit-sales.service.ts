@@ -287,63 +287,100 @@ export class CreditSalesService {
   }
 
   async updateStatus(id: string, status: string): Promise<CreditSale> {
+    console.log(`[CreditSalesService] updateStatus called - ID: ${id}, New Status: ${status}`);
+    
     const validStatuses = ['pending', 'active', 'completed', 'overdue'];
     if (!validStatuses.includes(status)) {
       throw new BadRequestException(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
     }
 
     await this.creditSaleModel.findByIdAndUpdate(id, { status }, { new: true }).exec();
+    console.log(`[CreditSalesService] Status updated in database to: ${status}`);
     
     const saved = await this.findOne(id);
+    console.log(`[CreditSalesService] Credit sale retrieved after update`);
 
     // If a credit sale becomes completed (paid), mirror it as a normal Sale
     try {
       if (status === 'completed' && this.salesService) {
+        console.log('[CreditSalesService] Status is "completed", checking for existing mirror...');
+        
         const saleModel = this.connection.model('Sale');
         const existingMirror = await saleModel.findOne({ 
-          source_credit_sale_id: new Types.ObjectId(id) 
+          source_credit_sale_id: id  // Query by string, not ObjectId
         }).exec();
         
-        if (!existingMirror) {
+        if (existingMirror) {
+          console.log('[CreditSalesService] ✅ Mirror sale already exists:', existingMirror._id);
+        } else {
+          console.log('[CreditSalesService] No existing mirror found, creating new one...');
+          
           const items = await this.creditSaleItemModel.find({ 
             credit_sale_id: new Types.ObjectId(id) 
           }).exec();
           
+          console.log(`[CreditSalesService] Found ${items.length} items for credit sale`);
+          
           if (items.length > 0) {
             const creditSale: any = saved;
-            const customerModel = this.connection.model('Customer');
-            const customer = await customerModel.findById(creditSale.customer_id).exec();
-            const customerName = customer?.name || `Customer#${creditSale.customer_id}`;
             
-            const saleDto: any = {
+            // Extract IDs from populated fields
+            const customerId = creditSale.customer_id?._id?.toString() || creditSale.customer_id?.toString();
+            const warehouseId = creditSale.warehouse_id?._id?.toString() || creditSale.warehouse_id?.toString();
+            const createdById = creditSale.created_by?._id?.toString() || creditSale.created_by?.toString();
+            
+            console.log('[CreditSalesService] Extracted IDs:', { customerId, warehouseId, createdById });
+            
+            const customerModel = this.connection.model('Customer');
+            const customer = await customerModel.findById(customerId).exec();
+            const customerName = customer?.name || `Customer#${customerId}`;
+            
+            console.log('[CreditSalesService] Customer name:', customerName);
+            
+            // Create mirror sale directly without triggering stock decrement
+            // Stock was already decremented when credit sale was created
+            const mirrorSale = new saleModel({
               customer_name: customerName,
-              warehouse_id: creditSale.warehouse_id,
+              warehouse_id: new Types.ObjectId(warehouseId),
+              created_by: new Types.ObjectId(createdById),
               sale_date: creditSale.sale_date,
               total_amount: creditSale.total_amount,
-              created_by: creditSale.created_by,
-              items: items.map((item: any) => ({
-                product_id: item.product_id.toString(),
+              source_credit_sale_id: id, // Store as string, not ObjectId
+            });
+            
+            const savedMirrorSale = await mirrorSale.save();
+            console.log('[CreditSalesService] ✅ Mirror sale created:', savedMirrorSale._id);
+            
+            // Create sale items directly without stock operations
+            const saleItemModel = this.connection.model('SaleItem');
+            for (const item of items) {
+              const saleItem = new saleItemModel({
+                sale_id: savedMirrorSale._id,
+                product_id: item.product_id,
                 quantity: item.quantity,
                 unit_price: item.unit_price,
-              })),
-            };
+              });
+              await saleItem.save();
+              console.log(`[CreditSalesService]   ✅ Sale item created for product: ${item.product_id}`);
+            }
             
-            const mirrored: any = await this.salesService.create(saleDto, creditSale.created_by.toString());
-            // Persist linkage
-            const mirroredId = mirrored._id || mirrored.id;
-            await saleModel.findByIdAndUpdate(
-              mirroredId,
-              { source_credit_sale_id: new Types.ObjectId(id) },
-              { new: true }
-            ).exec();
+            console.log('[CreditSalesService] ✅✅✅ MIRROR SALE CREATION COMPLETE ✅✅✅');
+          } else {
+            console.log('[CreditSalesService] ⚠️ No items found, cannot create mirror sale');
           }
         }
+      } else if (status === 'completed' && !this.salesService) {
+        console.log('[CreditSalesService] ⚠️ Status is completed but salesService is not available');
+      } else {
+        console.log(`[CreditSalesService] Status is "${status}", not creating mirror sale`);
       }
     } catch (e) {
-      console.error('[CreditSalesService] Mirror to Sale failed:', e);
+      console.error('[CreditSalesService] ❌ Mirror to Sale failed:', e);
+      console.error('[CreditSalesService] Error stack:', e.stack);
       // Do not block status update
     }
 
+    console.log('[CreditSalesService] updateStatus completed, returning saved credit sale');
     return saved;
   }
 
@@ -478,6 +515,53 @@ export class CreditSalesService {
     }
     
     console.log('[CreditSalesService] All products validated successfully');
+  }
+
+  // Calculate total profit from credit sales for a specific year
+  async calculateProfitByYear(year: number): Promise<number> {
+    try {
+      const productModel = this.connection.model('Product');
+      
+      // Get all credit sales for the specified year
+      const creditSales = await this.creditSaleModel.find({
+        sale_date: {
+          $gte: new Date(year, 0, 1),
+          $lt: new Date(year + 1, 0, 1)
+        }
+      }).exec();
+
+      let totalProfit = 0;
+
+      // For each credit sale, get its items and calculate profit
+      for (const creditSale of creditSales) {
+        const items = await this.creditSaleItemModel.find({
+          credit_sale_id: creditSale._id
+        }).exec();
+
+        // For each item, calculate profit
+        for (const item of items) {
+          const itemObj: any = item.toObject();
+          
+          // Get product to fetch supplier price
+          const product = await productModel.findById(itemObj.product_id).exec();
+          
+          if (product) {
+            const productObj: any = product.toObject();
+            const unitPrice = itemObj.unit_price || 0;
+            const supplierPrice = productObj.supplier_price || 0;
+            const quantity = itemObj.quantity || 0;
+            
+            const profit = (unitPrice - supplierPrice) * quantity;
+            totalProfit += profit;
+          }
+        }
+      }
+
+      return totalProfit;
+    } catch (e) {
+      console.error('[CreditSalesService] Error calculating profit:', e);
+      return 0;
+    }
   }
 }
 
