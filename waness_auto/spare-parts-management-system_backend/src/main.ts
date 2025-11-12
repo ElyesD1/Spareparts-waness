@@ -1,0 +1,26 @@
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import * as dotenv from 'dotenv';
+import { ValidationPipe } from '@nestjs/common';
+
+dotenv.config(); // Charger les variables d'environnement manuellement
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // Enable global validation pipe with permissive settings
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: false,        // Allow unknown properties
+    forbidNonWhitelisted: false, // Don't reject unknown properties
+    transform: true,         // Transform data types
+    transformOptions: {
+      enableImplicitConversion: true,
+    },
+    skipMissingProperties: true, // Skip validation for missing properties
+  }));
+
+  app.enableCors();
+
+  await app.listen(process.env.PORT ?? 3000);
+}
+bootstrap();

@@ -1,0 +1,9 @@
+{
+  "devDependencies": {
+    "@types/node": "^24.0.3",
+    "@types/passport": "^1.0.17"
+  },
+  "dependencies": {
+    "passport": "^0.7.0"
+  }
+}

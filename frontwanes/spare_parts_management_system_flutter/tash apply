@@ -1,0 +1,21 @@
+ android/app/build.gradle.kts                  |    2 [32m+[m[31m-[m
+ lib/services/auth_service.dart                |    2 [32m+[m[31m-[m
+ lib/services/product_service.dart             |    4 [32m+[m[31m-[m
+ lib/services/sale_item_service.dart           |   60 [32m+[m[31m-[m
+ lib/services/sales_service.dart               |   46 [32m+[m[31m-[m
+ lib/views/screens/home_screen.dart            | 2008 [32m+++++++++[m[31m----------------[m
+ lib/views/screens/login_screen.dart           |  290 [32m+++[m[31m-[m
+ lib/views/screens/products_screen.dart        |  363 [32m++++[m[31m-[m
+ lib/views/screens/purchases_screen.dart       |  309 [32m+++[m[31m-[m
+ lib/views/screens/sales_screen.dart           | 1591 [32m++++++++++[m[31m----------[m
+ lib/views/screens/suppliers_screen.dart       | 1042 [32m+++++++[m[31m------[m
+ lib/views/screens/warehouses_screen.dart      |  284 [32m+++[m[31m-[m
+ lib/views/widgets/facture_dialog.dart         |  792 [32m++++++[m[31m----[m
+ lib/views/widgets/facture_pdf.dart            |  132 [32m+[m[31m-[m
+ lib/views/widgets/sale_items_dialog.dart      |    3 [31m-[m
+ lib/views/widgets/sales_form.dart             |    5 [32m+[m[31m-[m
+ lib/views/widgets/sidebar.dart                |  303 [32m+++[m[31m-[m
+ macos/Flutter/GeneratedPluginRegistrant.swift |    2 [32m+[m
+ pubspec.lock                                  |   32 [32m+[m
+ pubspec.yaml                                  |    1 [32m+[m
+ 20 files changed, 4159 insertions(+), 3112 deletions(-)
