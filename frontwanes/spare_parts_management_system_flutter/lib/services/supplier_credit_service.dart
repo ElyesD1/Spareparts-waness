@@ -3,9 +3,10 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/domain/supplier_credit.dart';
 import '../models/domain/supplier_credit_usage.dart';
+import '../config/app_config.dart';
 
 class SupplierCreditService {
-  static const String baseUrl = 'http://localhost:3000/supplier-credits';
+  static final String baseUrl = AppConfig.supplierCreditsUrl;
 
   static Future<List<SupplierCredit>> getAvailableCredits(
     String supplierId,

@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/app_config.dart';
 
 class SupplierService {
-  static const String _baseUrl = 'http://localhost:3000/suppliers';
+  static final String _baseUrl = AppConfig.suppliersUrl;
 
   Future<List<Map<String, dynamic>>> getSuppliers() async {
     final url = Uri.parse(_baseUrl);

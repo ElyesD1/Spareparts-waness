@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:spare_parts_management_system_flutter/services/user_service.dart'; // Added import for UserService
+import '../config/app_config.dart';
 
 class AuthService {
-  static const String _baseUrl = 'http://localhost:3000/auth';
+  static final String _baseUrl = AppConfig.authUrl;
   static const Duration _tokenRefreshThreshold = Duration(minutes: 5);
 
   // Cache for JWT payload to avoid repeated decoding
@@ -168,12 +169,12 @@ class AuthService {
     if (userJson != null) {
       try {
         final storedUser = jsonDecode(userJson) as Map<String, dynamic>;
-        
+
         // Convert MongoDB _id to id for frontend compatibility
         if (storedUser.containsKey('_id') && !storedUser.containsKey('id')) {
           storedUser['id'] = storedUser['_id'];
         }
-        
+
         final storedUserId = storedUser['userId'] ?? storedUser['id'];
 
         // Verify the stored user matches the JWT subject

@@ -2,12 +2,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/domain/operational_expense.dart';
+import '../config/app_config.dart';
 import 'session_manager.dart';
 import 'warehouse_service.dart';
 import 'user_service.dart';
 
 class OperationalExpenseService {
-  static const String baseUrl = 'http://localhost:3000/operational-expenses';
+  static final String baseUrl = AppConfig.operationalExpensesUrl;
 
   static Future<List<OperationalExpense>> getOperationalExpenses() async {
     try {

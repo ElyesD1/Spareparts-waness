@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config/app_config.dart';
 
 class WarehouseService {
-  static const String _baseUrl = 'http://localhost:3000/warehouses';
+  static final String _baseUrl = AppConfig.warehousesUrl;
 
   Future<String?> _getAuthToken() async {
     final prefs = await SharedPreferences.getInstance();

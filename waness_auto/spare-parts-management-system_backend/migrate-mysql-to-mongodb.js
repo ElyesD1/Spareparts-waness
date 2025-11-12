@@ -1,5 +1,6 @@
 const mysql = require('mysql2/promise');
 const { MongoClient } = require('mongodb');
+require('dotenv').config();
 
 // Configuration
 const mysqlConfig = {
@@ -9,7 +10,7 @@ const mysqlConfig = {
   database: 'spare_parts_management1'
 };
 
-const mongodbUri = 'mongodb://localhost:27017';
+const mongodbUri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
 const mongodbDatabase = 'spare_parts_management';
 
 // Tables to migrate (in order to respect foreign keys)

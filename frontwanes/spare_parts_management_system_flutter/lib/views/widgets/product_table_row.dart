@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/domain/product.dart';
+import '../../config/app_config.dart';
 
 class ProductTableRow extends StatefulWidget {
   final Product product;
@@ -30,7 +31,7 @@ class _ProductTableRowState extends State<ProductTableRow> {
     }
 
     String cleanImage = image.replaceAll(RegExp(r'^[/\\]+'), '');
-    return 'http://localhost:3000/uploads/$cleanImage';
+    return '${AppConfig.uploadsUrl}/$cleanImage';
   }
 
   @override
@@ -45,24 +46,26 @@ class _ProductTableRowState extends State<ProductTableRow> {
           color: isHovered ? const Color(0xFFF8FAFC) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isHovered ? const Color(0xFFE2E8F0) : const Color(0xFFF1F5F9),
+            color:
+                isHovered ? const Color(0xFFE2E8F0) : const Color(0xFFF1F5F9),
             width: 1,
           ),
-          boxShadow: isHovered
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
+          boxShadow:
+              isHovered
+                  ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                  : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
         ),
         child: Material(
           color: Colors.transparent,
@@ -78,28 +81,16 @@ class _ProductTableRowState extends State<ProductTableRow> {
                   const SizedBox(width: 20),
 
                   // Product Info
-                  Expanded(
-                    flex: 3,
-                    child: _buildProductInfo(),
-                  ),
+                  Expanded(flex: 3, child: _buildProductInfo()),
 
                   // Category Badge
-                  Expanded(
-                    flex: 2,
-                    child: _buildCategoryBadge(),
-                  ),
+                  Expanded(flex: 2, child: _buildCategoryBadge()),
 
                   // Supplier Info
-                  Expanded(
-                    flex: 2,
-                    child: _buildSupplierInfo(),
-                  ),
+                  Expanded(flex: 2, child: _buildSupplierInfo()),
 
                   // Price
-                  Expanded(
-                    flex: 2,
-                    child: _buildPriceInfo(),
-                  ),
+                  Expanded(flex: 2, child: _buildPriceInfo()),
 
                   // Modern Actions
                   _buildActions(),
@@ -121,46 +112,47 @@ class _ProductTableRowState extends State<ProductTableRow> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFFF1F5F9),
-            const Color(0xFFE2E8F0),
-          ],
+          colors: [const Color(0xFFF1F5F9), const Color(0xFFE2E8F0)],
         ),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: widget.product.image != null && widget.product.image!.isNotEmpty
-            ? Image.network(
-                getProductImageUrl(widget.product.image),
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.grey[100]!, Colors.grey[200]!],
+        child:
+            widget.product.image != null && widget.product.image!.isNotEmpty
+                ? Image.network(
+                  getProductImageUrl(widget.product.image),
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.grey[100]!, Colors.grey[200]!],
+                        ),
                       ),
+                      child: Icon(
+                        Icons.image_not_supported_outlined,
+                        color: Colors.grey[500],
+                        size: 24,
+                      ),
+                    );
+                  },
+                )
+                : Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFF64748B).withOpacity(0.1),
+                        const Color(0xFF475569).withOpacity(0.1),
+                      ],
                     ),
-                    child: Icon(
-                      Icons.image_not_supported_outlined,
-                      color: Colors.grey[500],
-                      size: 24,
-                    ),
-                  );
-                },
-              )
-            : Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [const Color(0xFF64748B).withOpacity(0.1), const Color(0xFF475569).withOpacity(0.1)],
+                  ),
+                  child: Icon(
+                    Icons.inventory_2_rounded,
+                    color: const Color(0xFF64748B),
+                    size: 28,
                   ),
                 ),
-                child: Icon(
-                  Icons.inventory_2_rounded,
-                  color: const Color(0xFF64748B),
-                  size: 28,
-                ),
-              ),
       ),
     );
   }
@@ -203,9 +195,7 @@ class _ProductTableRowState extends State<ProductTableRow> {
           ],
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFF3B82F6).withOpacity(0.2),
-        ),
+        border: Border.all(color: const Color(0xFF3B82F6).withOpacity(0.2)),
       ),
       child: Text(
         widget.product.category ?? 'Non catégorisé',
@@ -258,9 +248,7 @@ class _ProductTableRowState extends State<ProductTableRow> {
           ],
         ),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: const Color(0xFF10B981).withOpacity(0.2),
-        ),
+        border: Border.all(color: const Color(0xFF10B981).withOpacity(0.2)),
       ),
       child: Text(
         '${widget.product.unitPrice.toStringAsFixed(2)} DNT',
@@ -312,11 +300,7 @@ class _ProductTableRowState extends State<ProductTableRow> {
           borderRadius: BorderRadius.circular(8),
           child: Container(
             padding: const EdgeInsets.all(10),
-            child: Icon(
-              icon,
-              size: 18,
-              color: color,
-            ),
+            child: Icon(icon, size: 18, color: color),
           ),
         ),
       ),

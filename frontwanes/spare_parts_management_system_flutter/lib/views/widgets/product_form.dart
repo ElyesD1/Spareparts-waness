@@ -4,6 +4,7 @@ import '../../services/product_service.dart';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import '../../models/domain/product.dart';
+import '../../config/app_config.dart';
 import '../../services/supplier_service.dart';
 import 'app_toast.dart';
 
@@ -12,7 +13,7 @@ String getProductImageUrl(String? image) {
   if (image.startsWith('http')) return image;
 
   String cleanImage = image.replaceAll(RegExp(r'^[/\\]+'), '');
-  return 'http://localhost:3000/uploads/$cleanImage';
+  return '${AppConfig.uploadsUrl}/$cleanImage';
 }
 
 class ProductForm extends StatefulWidget {

@@ -5,6 +5,7 @@ import 'http_client.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart';
 import '../models/domain/product.dart';
+import '../config/app_config.dart';
 
 class ProductService {
   final ApiClient _api = ApiClient();
@@ -13,7 +14,7 @@ class ProductService {
     return prefs.getString('access_token');
   }
 
-  static const String _baseUrl = 'http://localhost:3000/products';
+  static final String _baseUrl = AppConfig.productsUrl;
 
   Future<List<Product>> getProducts() async {
     final data = await _api.get('/products');
@@ -46,7 +47,7 @@ class ProductService {
 
   Future<Product> addProductWithImage(Product product, XFile? image) async {
     final token = await _getAuthToken();
-    final url = Uri.parse('http://localhost:3000/products/with-image');
+    final url = Uri.parse('${AppConfig.productsUrl}/with-image');
     var request = http.MultipartRequest('POST', url);
     request.headers['Authorization'] = 'Bearer $token';
     request.fields['product'] = jsonEncode(product.toJson());
@@ -78,7 +79,7 @@ class ProductService {
     XFile? image,
   ) async {
     final token = await _getAuthToken();
-    final url = Uri.parse('http://localhost:3000/products/$id/with-image');
+    final url = Uri.parse('${AppConfig.productsUrl}/$id/with-image');
 
     var request = http.MultipartRequest('PUT', url);
     request.headers['Authorization'] = 'Bearer $token';

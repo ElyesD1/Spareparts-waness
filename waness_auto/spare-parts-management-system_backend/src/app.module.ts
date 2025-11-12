@@ -38,7 +38,7 @@ import { ProductTransfersModule } from './product-transfers/product-transfers.mo
         index: false,
       },
     }),
-    MongooseModule.forRoot('mongodb://localhost:27017/spare_parts_management', {
+    MongooseModule.forRoot(process.env.MONGODB_URI || 'mongodb://localhost:27017/spare_parts_management', {
       retryWrites: true,
       w: 'majority',
     }),

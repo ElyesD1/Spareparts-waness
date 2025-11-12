@@ -2,10 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/domain/customer.dart';
+import '../config/app_config.dart';
 import 'auth_service.dart';
 
 class CustomersService {
-  static const String baseUrl = 'http://localhost:3000/customers';
+  static final String baseUrl = AppConfig.customersUrl;
 
   static Future<List<Customer>> getCustomers() async {
     try {

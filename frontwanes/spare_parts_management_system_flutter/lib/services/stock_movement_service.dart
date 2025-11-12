@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/domain/stock_movement.dart';
+import '../config/app_config.dart';
 import 'session_manager.dart';
 
 class StockMovementService {
-  final String baseUrl = 'http://localhost:3000/movements';
+  final String baseUrl = AppConfig.movementsUrl;
 
   // Plain JSON list for ViewModels that expect Map<String, dynamic>
   Future<List<Map<String, dynamic>>> fetchMovements() async {

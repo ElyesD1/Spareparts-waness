@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/domain/credit_payment.dart';
+import '../config/app_config.dart';
 
 class CreditPaymentsService {
-  static const String baseUrl = 'http://localhost:3000'; // Update with your backend URL
+  static final String baseUrl = AppConfig.baseUrl;
 
   Future<String?> _getAuthToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -19,29 +20,26 @@ class CreditPaymentsService {
     };
   }
 
-  Future<CreditPayment> createCreditPayment(Map<String, dynamic> paymentData) async {
+  Future<CreditPayment> createCreditPayment(
+    Map<String, dynamic> paymentData,
+  ) async {
     try {
       final headers = await _getHeaders();
-      
-   
-      
+
       final response = await http.post(
         Uri.parse('$baseUrl/credit-payments'),
         headers: headers,
         body: jsonEncode(paymentData),
       );
 
-
       if (response.statusCode == 201 || response.statusCode == 200) {
         final payment = CreditPayment.fromJson(jsonDecode(response.body));
-      
+
         return payment;
       } else {
-       
         throw Exception('Failed to create credit payment: ${response.body}');
       }
     } catch (e) {
-     
       throw Exception('Error creating credit payment: $e');
     }
   }
@@ -65,7 +63,9 @@ class CreditPaymentsService {
     }
   }
 
-  Future<List<CreditPayment>> getPaymentsByCreditSale(String creditSaleId) async {
+  Future<List<CreditPayment>> getPaymentsByCreditSale(
+    String creditSaleId,
+  ) async {
     try {
       final headers = await _getHeaders();
       final response = await http.get(
@@ -77,7 +77,9 @@ class CreditPaymentsService {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((json) => CreditPayment.fromJson(json)).toList();
       } else {
-        throw Exception('Failed to fetch credit sale payments: ${response.body}');
+        throw Exception(
+          'Failed to fetch credit sale payments: ${response.body}',
+        );
       }
     } catch (e) {
       throw Exception('Error fetching credit sale payments: $e');

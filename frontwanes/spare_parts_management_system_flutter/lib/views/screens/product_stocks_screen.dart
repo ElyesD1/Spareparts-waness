@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../models/domain/product_stock.dart';
 import '../../models/domain/product.dart';
+import '../../config/app_config.dart';
 import '../../services/session_manager.dart';
 import '../../services/product_service.dart';
 
@@ -15,7 +16,8 @@ class ProductStocksScreen extends StatefulWidget {
   State<ProductStocksScreen> createState() => _ProductStocksScreenState();
 }
 
-class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerProviderStateMixin {
+class _ProductStocksScreenState extends State<ProductStocksScreen>
+    with TickerProviderStateMixin {
   List<ProductStock> _stocks = [];
   List<Product> _products = [];
   List<dynamic> _warehouses = [];
@@ -28,7 +30,8 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
   String? _userRole;
 
   // Responsive breakpoints
-  bool _isMobile(BuildContext context) => MediaQuery.of(context).size.width < 600;
+  bool _isMobile(BuildContext context) =>
+      MediaQuery.of(context).size.width < 600;
 
   @override
   void initState() {
@@ -57,15 +60,23 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
   Future<void> _fetchAll() async {
     setState(() => _loading = true);
     try {
-      final stocksResp = await http.get(Uri.parse('http://localhost:3000/product-stocks'));
-      final productsResp = await http.get(Uri.parse('http://localhost:3000/products'));
-      final warehousesResp = await http.get(Uri.parse('http://localhost:3000/warehouses'));
-      
-      if (stocksResp.statusCode == 200 && productsResp.statusCode == 200 && warehousesResp.statusCode == 200) {
-        final stocks = (jsonDecode(stocksResp.body) as List).map((e) => ProductStock.fromJson(e)).toList();
-        final products = (jsonDecode(productsResp.body) as List).map((e) => Product.fromJson(e)).toList();
+      final stocksResp = await http.get(Uri.parse(AppConfig.productStocksUrl));
+      final productsResp = await http.get(Uri.parse(AppConfig.productsUrl));
+      final warehousesResp = await http.get(Uri.parse(AppConfig.warehousesUrl));
+
+      if (stocksResp.statusCode == 200 &&
+          productsResp.statusCode == 200 &&
+          warehousesResp.statusCode == 200) {
+        final stocks =
+            (jsonDecode(stocksResp.body) as List)
+                .map((e) => ProductStock.fromJson(e))
+                .toList();
+        final products =
+            (jsonDecode(productsResp.body) as List)
+                .map((e) => Product.fromJson(e))
+                .toList();
         final warehouses = jsonDecode(warehousesResp.body) as List;
-        
+
         setState(() {
           _stocks = stocks;
           _products = products;
@@ -88,10 +99,7 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
       setState(() => _loading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -99,7 +107,7 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
 
   Future<void> _searchByBarcode(String barcode) async {
     if (barcode.isEmpty) return;
-    
+
     try {
       final product = await _productService.getProductByBarcode(barcode);
       if (product != null) {
@@ -138,14 +146,15 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
   void _showAddStockDialog() {
     showDialog(
       context: context,
-      builder: (context) => _AddStockDialog(
-        products: _products,
-        warehouses: _warehouses,
-        onStockAdded: () {
-          _fetchAll();
-          Navigator.of(context).pop();
-        },
-      ),
+      builder:
+          (context) => _AddStockDialog(
+            products: _products,
+            warehouses: _warehouses,
+            onStockAdded: () {
+              _fetchAll();
+              Navigator.of(context).pop();
+            },
+          ),
     );
   }
 
@@ -154,9 +163,10 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       // Add drawer for mobile
-      drawer: _isMobile(context) ? Drawer(
-        child: Sidebar(selected: SidebarSection.productStocks),
-      ) : null,
+      drawer:
+          _isMobile(context)
+              ? Drawer(child: Sidebar(selected: SidebarSection.productStocks))
+              : null,
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (_isMobile(context)) {
@@ -175,7 +185,7 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
         children: [
           // Mobile Header
           _buildMobileHeader(),
-          
+
           // Content
           Expanded(
             child: SingleChildScrollView(
@@ -185,11 +195,11 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
                   // Stats Grid
                   _buildMobileStats(),
                   const SizedBox(height: 20),
-                  
+
                   // Search and Filters
                   _buildMobileSearchAndFilters(),
                   const SizedBox(height: 20),
-                  
+
                   // Stocks List
                   _buildMobileStocksList(),
                 ],
@@ -223,7 +233,7 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
                 children: [
                   // Header
                   _buildDesktopHeader(),
-                  
+
                   // Main Content
                   Expanded(
                     child: SingleChildScrollView(
@@ -233,7 +243,7 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
                           // Stats Row
                           _buildDesktopStats(),
                           const SizedBox(height: 32),
-                          
+
                           // Content Area
                           _buildDesktopContent(),
                         ],
@@ -266,17 +276,22 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
             children: [
               // Hamburger Menu Button
               Builder(
-                builder: (BuildContext context) => Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: IconButton(
-                    onPressed: () => Scaffold.of(context).openDrawer(),
-                    icon: const Icon(Icons.menu, color: Colors.white, size: 24),
-                    tooltip: 'Ouvrir le menu',
-                  ),
-                ),
+                builder:
+                    (BuildContext context) => Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: IconButton(
+                        onPressed: () => Scaffold.of(context).openDrawer(),
+                        icon: const Icon(
+                          Icons.menu,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                        tooltip: 'Ouvrir le menu',
+                      ),
+                    ),
               ),
               const SizedBox(width: 16),
               Icon(Icons.inventory_2, color: Colors.white, size: 28),
@@ -350,8 +365,12 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
     final totalProducts = _products.length;
     final totalWarehouses = _warehouses.length;
     final dedupedStocks = _getDedupedStocks();
-    final totalQuantity = dedupedStocks.fold<int>(0, (sum, s) => sum + s.quantity);
-    final lowStockCount = dedupedStocks.where((s) => s.quantity < _lowStockThreshold).length;
+    final totalQuantity = dedupedStocks.fold<int>(
+      0,
+      (sum, s) => sum + s.quantity,
+    );
+    final lowStockCount =
+        dedupedStocks.where((s) => s.quantity < _lowStockThreshold).length;
 
     return GridView.count(
       crossAxisCount: 2,
@@ -389,7 +408,12 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
     );
   }
 
-  Widget _buildMobileStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildMobileStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -469,14 +493,19 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4CAF50),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        
+
         // Filter Chips
         Container(
           height: 45,
@@ -507,7 +536,8 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
           _selectedFilter = selected ? filter : 'Tous';
         });
       },
-      backgroundColor: isSelected ? Colors.deepPurple.withOpacity(0.1) : Colors.white,
+      backgroundColor:
+          isSelected ? Colors.deepPurple.withOpacity(0.1) : Colors.white,
       selectedColor: Colors.deepPurple.withOpacity(0.1),
       labelStyle: TextStyle(
         color: isSelected ? Colors.deepPurple : Colors.grey[700],
@@ -541,17 +571,18 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
     }
 
     return Column(
-      children: filteredStocks.map((stock) => _buildMobileStockCard(stock)).toList(),
+      children:
+          filteredStocks.map((stock) => _buildMobileStockCard(stock)).toList(),
     );
   }
 
   Widget _buildMobileStockCard(ProductStock stock) {
     final isLowStock = stock.quantity < _lowStockThreshold;
     final isEmpty = stock.quantity == 0;
-    
+
     Color statusColor;
     String statusText;
-    
+
     if (isEmpty) {
       statusColor = Colors.red;
       statusText = 'Rupture';
@@ -601,10 +632,7 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
                     const SizedBox(height: 4),
                     Text(
                       stock.warehouse?['name'] ?? 'Entrepôt inconnu',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                     ),
@@ -612,10 +640,7 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
                       const SizedBox(height: 2),
                       Text(
                         'Catégorie: ${stock.product?.category}',
-                        style: TextStyle(
-                          color: Colors.grey[500],
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                       ),
@@ -627,7 +652,10 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -643,7 +671,10 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
                   ),
                   const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor,
                       borderRadius: BorderRadius.circular(8),
@@ -671,9 +702,7 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[200]!),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
       ),
       child: Row(
         children: [
@@ -692,10 +721,7 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
               ),
               Text(
                 'Vue d\'ensemble des stocks par entrepôt',
-                style: TextStyle(
-                  color: Color(0xFF64748B),
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
               ),
             ],
           ),
@@ -708,8 +734,13 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF6C63FF),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
             const SizedBox(width: 12),
@@ -721,10 +752,7 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
           ),
           const SizedBox(width: 12),
           // Profile Button
-          ResponsiveProfileButton(
-            isMobile: false,
-            textColor: Colors.black87,
-          ),
+          ResponsiveProfileButton(isMobile: false, textColor: Colors.black87),
         ],
       ),
     );
@@ -734,8 +762,12 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
     final totalProducts = _products.length;
     final totalWarehouses = _warehouses.length;
     final dedupedStocks = _getDedupedStocks();
-    final totalQuantity = dedupedStocks.fold<int>(0, (sum, s) => sum + s.quantity);
-    final lowStockCount = dedupedStocks.where((s) => s.quantity < _lowStockThreshold).length;
+    final totalQuantity = dedupedStocks.fold<int>(
+      0,
+      (sum, s) => sum + s.quantity,
+    );
+    final lowStockCount =
+        dedupedStocks.where((s) => s.quantity < _lowStockThreshold).length;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -832,7 +864,12 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
     );
   }
 
-  Widget _buildDesktopStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildDesktopStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -924,13 +961,10 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
               children: [
                 const Text(
                   'Stocks des Produits',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                 ),
                 const Spacer(),
-                
+
                 // Search Bar
                 Container(
                   width: 300,
@@ -949,13 +983,16 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(color: Colors.grey[300]!),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                     ),
                     onChanged: (value) => setState(() => _search = value),
                   ),
                 ),
                 const SizedBox(width: 16),
-                
+
                 // Filter Dropdown
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -967,12 +1004,18 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _selectedFilter,
-                      items: ['Tous', 'Stock Normal', 'Stock Faible', 'Rupture']
-                          .map((filter) => DropdownMenuItem(
-                                value: filter,
-                                child: Text(filter, style: const TextStyle(fontSize: 14)),
-                              ))
-                          .toList(),
+                      items:
+                          ['Tous', 'Stock Normal', 'Stock Faible', 'Rupture']
+                              .map(
+                                (filter) => DropdownMenuItem(
+                                  value: filter,
+                                  child: Text(
+                                    filter,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              )
+                              .toList(),
                       onChanged: (value) {
                         if (value != null) {
                           setState(() => _selectedFilter = value);
@@ -984,18 +1027,19 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
               ],
             ),
           ),
-          
+
           // Content
           Container(
             constraints: const BoxConstraints(minHeight: 400),
-            child: _loading
-                ? const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(40),
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                : _buildDesktopStocksList(),
+            child:
+                _loading
+                    ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                    : _buildDesktopStocksList(),
           ),
         ],
       ),
@@ -1023,11 +1067,11 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
   Widget _buildDesktopStockRow(ProductStock stock) {
     final isLowStock = stock.quantity < _lowStockThreshold;
     final isEmpty = stock.quantity == 0;
-    
+
     Color statusColor;
     String statusText;
     IconData statusIcon;
-    
+
     if (isEmpty) {
       statusColor = Colors.red;
       statusText = 'Rupture';
@@ -1061,10 +1105,14 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
                     color: Colors.deepPurple.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.inventory_2, color: Colors.deepPurple, size: 20),
+                  child: Icon(
+                    Icons.inventory_2,
+                    color: Colors.deepPurple,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 16),
-                
+
                 // Product Info
                 SizedBox(
                   width: 200,
@@ -1093,9 +1141,9 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(width: 16),
-                
+
                 // Warehouse
                 SizedBox(
                   width: 150,
@@ -1104,12 +1152,18 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.warehouse, size: 16, color: Colors.grey[600]),
+                          Icon(
+                            Icons.warehouse,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               stock.warehouse?['name'] ?? 'Inconnu',
-                              style: const TextStyle(fontWeight: FontWeight.w500),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
                             ),
@@ -1129,15 +1183,18 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(width: 16),
-                
+
                 // Quantity
                 SizedBox(
                   width: 100,
                   child: Center(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: statusColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
@@ -1153,9 +1210,9 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(width: 16),
-                
+
                 // Status
                 SizedBox(
                   width: 120,
@@ -1179,9 +1236,9 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(width: 16),
-                
+
                 // Actions
                 SizedBox(
                   width: 100,
@@ -1244,9 +1301,7 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
             const SizedBox(height: 8),
             Text(
               'Essayez d\'ajuster vos filtres de recherche',
-              style: TextStyle(
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(color: Colors.grey[500]),
               textAlign: TextAlign.center,
             ),
           ],
@@ -1278,14 +1333,16 @@ class _ProductStocksScreenState extends State<ProductStocksScreen> with TickerPr
 
   List<ProductStock> _getFilteredStocks() {
     final dedupedStocks = _getDedupedStocks();
-    
+
     return dedupedStocks.where((stock) {
       // Search filter
       final product = (stock.product?.name ?? '').toLowerCase();
-      final warehouse = (stock.warehouse?['name']?.toString() ?? '').toLowerCase();
+      final warehouse =
+          (stock.warehouse?['name']?.toString() ?? '').toLowerCase();
       final referenceCode = (stock.product?.referenceCode ?? '').toLowerCase();
       final barcode = (stock.product?.barcode ?? '').toLowerCase();
-      final matchesSearch = _search.isEmpty ||
+      final matchesSearch =
+          _search.isEmpty ||
           product.contains(_search.toLowerCase()) ||
           warehouse.contains(_search.toLowerCase()) ||
           referenceCode.contains(_search.toLowerCase()) ||
@@ -1344,10 +1401,8 @@ class _AddStockDialogState extends State<_AddStockDialog> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:3000/product-stocks'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        Uri.parse(AppConfig.productStocksUrl),
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'product_id': _selectedProduct!.id,
           'warehouse_id': _selectedWarehouse!['id'],
@@ -1368,10 +1423,7 @@ class _AddStockDialogState extends State<_AddStockDialog> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
       );
     } finally {
       setState(() => _loading = false);
@@ -1394,15 +1446,16 @@ class _AddStockDialogState extends State<_AddStockDialog> {
                 labelText: 'Produit',
                 border: OutlineInputBorder(),
               ),
-              items: widget.products.map((product) {
-                return DropdownMenuItem<Product>(
-                  value: product,
-                  child: Text(
-                    '${product.name} (${product.referenceCode})',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                );
-              }).toList(),
+              items:
+                  widget.products.map((product) {
+                    return DropdownMenuItem<Product>(
+                      value: product,
+                      child: Text(
+                        '${product.name} (${product.referenceCode})',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  }).toList(),
               onChanged: (value) {
                 setState(() => _selectedProduct = value);
               },
@@ -1420,12 +1473,13 @@ class _AddStockDialogState extends State<_AddStockDialog> {
                 labelText: 'Entrepôt',
                 border: OutlineInputBorder(),
               ),
-              items: widget.warehouses.map((warehouse) {
-                return DropdownMenuItem<Map<String, dynamic>>(
-                  value: warehouse,
-                  child: Text(warehouse['name'] ?? ''),
-                );
-              }).toList(),
+              items:
+                  widget.warehouses.map((warehouse) {
+                    return DropdownMenuItem<Map<String, dynamic>>(
+                      value: warehouse,
+                      child: Text(warehouse['name'] ?? ''),
+                    );
+                  }).toList(),
               onChanged: (value) {
                 setState(() => _selectedWarehouse = value);
               },
@@ -1465,13 +1519,14 @@ class _AddStockDialogState extends State<_AddStockDialog> {
         ),
         ElevatedButton(
           onPressed: _loading ? null : _addStock,
-          child: _loading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Ajouter'),
+          child:
+              _loading
+                  ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                  : const Text('Ajouter'),
         ),
       ],
     );

@@ -1,41 +1,34 @@
 import 'package:flutter/material.dart';
 import '../../models/domain/product.dart';
+import '../../config/app_config.dart';
 
 class ProductDetailsModal extends StatelessWidget {
   final Product product;
   final VoidCallback? onEdit;
 
-  const ProductDetailsModal({
-    Key? key,
-    required this.product,
-    this.onEdit,
-  }) : super(key: key);
+  const ProductDetailsModal({Key? key, required this.product, this.onEdit})
+    : super(key: key);
 
   String getProductImageUrl(String? image) {
     if (image == null || image.isEmpty) {
       return '';
     }
-    
+
     if (image.startsWith('http')) {
       return image;
     }
-    
+
     String cleanImage = image.replaceAll(RegExp(r'^[/\\]+'), '');
-    return 'http://localhost:3000/uploads/$cleanImage';
+    return '${AppConfig.uploadsUrl}/$cleanImage';
   }
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          maxWidth: 800,
-          maxHeight: 600,
-        ),
+        constraints: const BoxConstraints(maxWidth: 800, maxHeight: 600),
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -96,23 +89,29 @@ class ProductDetailsModal extends StatelessWidget {
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: product.image != null && product.image!.isNotEmpty
-                                  ? Image.network(
-                                      getProductImageUrl(product.image),
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return Icon(
-                                          Icons.image_not_supported,
-                                          size: 48,
-                                          color: Colors.grey[400],
-                                        );
-                                      },
-                                    )
-                                  : Icon(
-                                      Icons.inventory_2_outlined,
-                                      size: 48,
-                                      color: Colors.grey[400],
-                                    ),
+                              child:
+                                  product.image != null &&
+                                          product.image!.isNotEmpty
+                                      ? Image.network(
+                                        getProductImageUrl(product.image),
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) {
+                                          return Icon(
+                                            Icons.image_not_supported,
+                                            size: 48,
+                                            color: Colors.grey[400],
+                                          );
+                                        },
+                                      )
+                                      : Icon(
+                                        Icons.inventory_2_outlined,
+                                        size: 48,
+                                        color: Colors.grey[400],
+                                      ),
                             ),
                           ),
                           const SizedBox(width: 32),
@@ -122,34 +121,34 @@ class ProductDetailsModal extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _buildInfoSection(
-                                  'Informations générales',
-                                  [
-                                    _buildInfoRow('Nom', product.name),
-                                    _buildInfoRow('Référence', product.referenceCode),
-                                    if (product.brand != null)
-                                      _buildInfoRow('Marque', product.brand!),
-                                    if (product.category != null)
-                                      _buildInfoRow('Catégorie', product.category!),
-                                  ],
-                                ),
-                                const SizedBox(height: 24),
-                                _buildInfoSection(
-                                  'Tarification',
-                                  [
+                                _buildInfoSection('Informations générales', [
+                                  _buildInfoRow('Nom', product.name),
+                                  _buildInfoRow(
+                                    'Référence',
+                                    product.referenceCode,
+                                  ),
+                                  if (product.brand != null)
+                                    _buildInfoRow('Marque', product.brand!),
+                                  if (product.category != null)
                                     _buildInfoRow(
-                                      'Prix unitaire',
-                                      '${product.unitPrice.toStringAsFixed(2)} TND',
-                                      valueColor: Colors.green[700],
-                                      valueFontWeight: FontWeight.bold,
+                                      'Catégorie',
+                                      product.category!,
                                     ),
-                                    if (product.supplierPrice != null)
-                                      _buildInfoRow(
-                                        'Prix fournisseur',
-                                        '${product.supplierPrice!.toStringAsFixed(2)} TND',
-                                      ),
-                                  ],
-                                ),
+                                ]),
+                                const SizedBox(height: 24),
+                                _buildInfoSection('Tarification', [
+                                  _buildInfoRow(
+                                    'Prix unitaire',
+                                    '${product.unitPrice.toStringAsFixed(2)} TND',
+                                    valueColor: Colors.green[700],
+                                    valueFontWeight: FontWeight.bold,
+                                  ),
+                                  if (product.supplierPrice != null)
+                                    _buildInfoRow(
+                                      'Prix fournisseur',
+                                      '${product.supplierPrice!.toStringAsFixed(2)} TND',
+                                    ),
+                                ]),
                               ],
                             ),
                           ),
@@ -158,32 +157,30 @@ class ProductDetailsModal extends StatelessWidget {
                       const SizedBox(height: 32),
 
                       // Description
-                      if (product.description != null && product.description!.isNotEmpty) ...[
-                        _buildInfoSection(
-                          'Description',
-                          [
-                            Text(
-                              product.description!,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                height: 1.6,
-                              ),
-                            ),
-                          ],
-                        ),
+                      if (product.description != null &&
+                          product.description!.isNotEmpty) ...[
+                        _buildInfoSection('Description', [
+                          Text(
+                            product.description!,
+                            style: const TextStyle(fontSize: 14, height: 1.6),
+                          ),
+                        ]),
                         const SizedBox(height: 32),
                       ],
 
                       // Supplier Information
                       if (product.supplier != null)
-                        _buildInfoSection(
-                          'Information fournisseur',
-                          [
-                            _buildInfoRow('Nom', product.supplier!['name'] ?? 'N/A'),
-                            if (product.supplier!['contact'] != null)
-                              _buildInfoRow('Contact', product.supplier!['contact']),
-                          ],
-                        ),
+                        _buildInfoSection('Information fournisseur', [
+                          _buildInfoRow(
+                            'Nom',
+                            product.supplier!['name'] ?? 'N/A',
+                          ),
+                          if (product.supplier!['contact'] != null)
+                            _buildInfoRow(
+                              'Contact',
+                              product.supplier!['contact'],
+                            ),
+                        ]),
                     ],
                   ),
                 ),
@@ -238,7 +235,12 @@ class ProductDetailsModal extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, {Color? valueColor, FontWeight? valueFontWeight}) {
+  Widget _buildInfoRow(
+    String label,
+    String value, {
+    Color? valueColor,
+    FontWeight? valueFontWeight,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -248,10 +250,7 @@ class ProductDetailsModal extends StatelessWidget {
             width: 120,
             child: Text(
               label,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
           ),
           Expanded(

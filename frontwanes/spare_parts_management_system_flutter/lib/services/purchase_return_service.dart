@@ -2,11 +2,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/domain/purchase_return.dart';
+import '../config/app_config.dart';
 import 'stock_movement_service.dart';
 import 'product_stock_service.dart';
 
 class PurchaseReturnService {
-  static const String baseUrl = 'http://localhost:3000/purchase-returns';
+  static final String baseUrl = AppConfig.purchaseReturnsUrl;
 
   static Future<List<PurchaseReturn>> getPurchaseReturns({
     String? status,

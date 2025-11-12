@@ -2,13 +2,14 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../models/domain/credit_sale.dart';
+import '../config/app_config.dart';
 import 'product_stock_service.dart';
 import 'stock_movement_service.dart';
 import 'session_manager.dart';
 import 'customers_service.dart';
 
 class CreditSalesService {
-  static const String baseUrl = 'http://localhost:3000';
+  static final String baseUrl = AppConfig.baseUrl;
 
   Future<String?> _getAuthToken() async {
     final prefs = await SharedPreferences.getInstance();

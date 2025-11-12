@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import '../../config/app_config.dart';
 import 'products_screen.dart';
 import '../widgets/product_form.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -1610,9 +1611,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<List<ProductStock>> _fetchProductStocks() async {
     try {
-      final response = await http.get(
-        Uri.parse('http://localhost:3000/product-stocks'),
-      );
+      final response = await http.get(Uri.parse(AppConfig.productStocksUrl));
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((json) => ProductStock.fromJson(json)).toList();
@@ -2931,9 +2930,7 @@ class _RecentPurchasesTable extends StatelessWidget {
 class _LowStockAlertsCard extends StatelessWidget {
   Future<List<ProductStock>> _fetchProductStocks() async {
     try {
-      final response = await http.get(
-        Uri.parse('http://localhost:3000/product-stocks'),
-      );
+      final response = await http.get(Uri.parse(AppConfig.productStocksUrl));
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((json) => ProductStock.fromJson(json)).toList();

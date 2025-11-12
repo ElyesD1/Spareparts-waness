@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/domain/product_stock.dart';
+import '../config/app_config.dart';
 
 class ProductStockService {
-  static const String baseUrl = 'http://localhost:3000/product-stocks';
+  static final String baseUrl = AppConfig.productStocksUrl;
 
   Future<String?> _getAuthToken() async {
     final prefs = await SharedPreferences.getInstance();

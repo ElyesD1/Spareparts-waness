@@ -1,13 +1,15 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/app_config.dart';
 import 'auth_service.dart';
 
 class ApiClient {
   final String baseUrl;
   final AuthService _auth;
 
-  ApiClient({this.baseUrl = 'http://localhost:3000', AuthService? auth})
-    : _auth = auth ?? AuthService();
+  ApiClient({String? baseUrl, AuthService? auth})
+    : baseUrl = baseUrl ?? AppConfig.baseUrl,
+      _auth = auth ?? AuthService();
 
   Future<Map<String, String>> _headers() async {
     final token = await _auth.getValidToken();

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/domain/purchase.dart';
 import '../models/domain/purchase_item.dart';
+import '../config/app_config.dart';
 import 'session_manager.dart';
 import 'warehouse_service.dart';
 import 'auth_service.dart';
@@ -15,7 +16,7 @@ class PurchaseService {
     return prefs.getString('access_token');
   }
 
-  final String baseUrl = 'http://localhost:3000/purchases';
+  final String baseUrl = AppConfig.purchasesUrl;
 
   Future<List<Purchase>> fetchPurchases() async {
     final token = await _getAuthToken();
@@ -126,7 +127,7 @@ class PurchaseService {
   Future<void> createPurchaseItem(Map<String, dynamic> itemData) async {
     final token = await _getAuthToken();
     final response = await http.post(
-      Uri.parse('http://localhost:3000/purchase-item'),
+      Uri.parse('${AppConfig.purchaseItemUrl}'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -142,7 +143,7 @@ class PurchaseService {
   Future<List<PurchaseItem>> fetchPurchaseItems(String purchaseId) async {
     final token = await _getAuthToken();
     final response = await http.get(
-      Uri.parse('http://localhost:3000/purchase-item/purchase/$purchaseId'),
+      Uri.parse('${AppConfig.purchaseItemUrl}/purchase/$purchaseId'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -163,7 +164,7 @@ class PurchaseService {
 
   Future<void> updatePurchase(String id, Map<String, dynamic> data) async {
     final response = await http.put(
-      Uri.parse('http://localhost:3000/purchases/$id'),
+      Uri.parse('${AppConfig.purchasesUrl}/$id'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
     );
@@ -174,7 +175,7 @@ class PurchaseService {
 
   Future<void> deletePurchase(String id) async {
     final response = await http.delete(
-      Uri.parse('http://localhost:3000/purchases/$id'),
+      Uri.parse('${AppConfig.purchasesUrl}/$id'),
       headers: {'Content-Type': 'application/json'},
     );
     if (response.statusCode != 200 && response.statusCode != 204) {
@@ -188,9 +189,7 @@ class PurchaseService {
   ) async {
     try {
       // Step 1: Confirm delivery in the backend
-      final url = Uri.parse(
-        'http://localhost:3000/purchases/$purchaseId/deliver',
-      );
+      final url = Uri.parse('${AppConfig.purchasesUrl}/$purchaseId/deliver');
 
       final response = await http.put(
         url,

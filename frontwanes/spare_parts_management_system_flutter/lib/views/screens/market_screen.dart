@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/domain/product_stock.dart';
 import '../../models/domain/product.dart';
+import '../../config/app_config.dart';
 import '../../services/product_stock_service.dart';
 import '../widgets/sidebar.dart';
 import '../widgets/app_header.dart';
@@ -1118,10 +1119,10 @@ class _MarketScreenState extends State<MarketScreen> {
 
     // For relative paths, try different URL patterns in order of priority
     final urlsToTry = [
-      'http://localhost:3000/uploads/$imagePath', // Try uploads/ first
-      'http://localhost:3000/uploads/products/$imagePath', // Then uploads/products/
-      'http://localhost:3000/images/$imagePath', // Then images/
-      'http://localhost:3000/$imagePath', // Finally root
+      '${AppConfig.uploadsUrl}/$imagePath', // Try uploads/ first
+      '${AppConfig.uploadsUrl}/products/$imagePath', // Then uploads/products/
+      '${AppConfig.baseUrl}/images/$imagePath', // Then images/
+      '${AppConfig.baseUrl}/$imagePath', // Finally root
     ];
 
     return _buildImageWithMultipleUrls(product, desktop, urlsToTry, 0);

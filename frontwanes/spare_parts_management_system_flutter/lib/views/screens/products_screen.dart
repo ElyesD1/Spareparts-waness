@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../view_model/products_view_model.dart';
 import '../widgets/sidebar.dart';
 import '../../models/domain/product.dart';
+import '../../config/app_config.dart';
 import '../widgets/product_form.dart';
 import '../../utils/responsive_helper.dart';
 import '../widgets/product_details_modal.dart';
@@ -18,7 +19,7 @@ String getProductImageUrl(String? image) {
   }
 
   String cleanImage = image.replaceAll(RegExp(r'^[/\\]+'), '');
-  return 'http://localhost:3000/uploads/$cleanImage';
+  return '${AppConfig.uploadsUrl}/$cleanImage';
 }
 
 class ProductsScreen extends StatefulWidget {

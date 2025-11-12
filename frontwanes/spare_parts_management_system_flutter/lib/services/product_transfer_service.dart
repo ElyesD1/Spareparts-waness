@@ -2,10 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/domain/product_transfer.dart';
+import '../config/app_config.dart';
 import 'session_manager.dart';
 
 class ProductTransferService {
-  static const String baseUrl = 'http://localhost:3000/product-transfers';
+  static final String baseUrl = AppConfig.productTransfersUrl;
 
   Future<String?> _getAuthToken() async {
     final prefs = await SharedPreferences.getInstance();

@@ -3,10 +3,11 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/domain/user.dart';
 import 'session_manager.dart';
+import '../config/app_config.dart';
 
 class UserService {
-  static const String baseUrl = 'http://localhost:3000';
-  static const String _authBaseUrl = 'http://localhost:3000/auth';
+  static final String baseUrl = AppConfig.baseUrl;
+  static final String _authBaseUrl = AppConfig.authUrl;
 
   // Helper method to get access token from SharedPreferences
   static Future<String> _getAccessToken() async {
@@ -82,7 +83,7 @@ class UserService {
   }
 
   Future<Map<String, dynamic>> forgotPassword({required String email}) async {
-    final url = Uri.parse('http://localhost:3000/auth/forgot-password');
+    final url = Uri.parse('${AppConfig.authUrl}/forgot-password');
     final body = jsonEncode({'email': email, 'password': ''});
 
     try {
@@ -110,7 +111,7 @@ class UserService {
     required String newPassword,
     required String confirmPassword,
   }) async {
-    final url = Uri.parse('http://localhost:3000/otp/reset-password');
+    final url = Uri.parse('${AppConfig.otpUrl}/reset-password');
     final body = jsonEncode({
       'userId': userId,
       'otp': otp,
@@ -166,7 +167,7 @@ class UserService {
 
   Future<User?> getUserById(String id) async {
     final response = await http.get(
-      Uri.parse('http://localhost:3000/users/profile/$id'),
+      Uri.parse('${AppConfig.usersUrl}/profile/$id'),
     );
     if (response.statusCode == 200 || response.statusCode == 201) {
       final data = jsonDecode(response.body);
@@ -181,7 +182,7 @@ class UserService {
     Map<String, dynamic> data,
   ) async {
     final response = await http.patch(
-      Uri.parse('http://localhost:3000/users/update/$id'),
+      Uri.parse('${AppConfig.usersUrl}/update/$id'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
     );
