@@ -24,7 +24,24 @@ class WarehouseService {
     final response = await http.get(url, headers: headers);
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
-      return data.cast<Map<String, dynamic>>();
+      final warehouses = data.cast<Map<String, dynamic>>();
+
+      // Normalize MongoDB _id to id for each warehouse
+      for (var warehouse in warehouses) {
+        if (warehouse['_id'] != null) {
+          // Handle MongoDB ObjectId format: {"$oid": "xxx"} or just the string
+          final id = warehouse['_id'];
+          if (id is Map && id['\$oid'] != null) {
+            warehouse['id'] = id['\$oid'];
+          } else if (id is String) {
+            warehouse['id'] = id;
+          } else {
+            warehouse['id'] = id.toString();
+          }
+        }
+      }
+
+      return warehouses;
     } else {
       throw Exception('Failed to load warehouses: ${response.body}');
     }

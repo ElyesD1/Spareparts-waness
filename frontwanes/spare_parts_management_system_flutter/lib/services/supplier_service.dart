@@ -9,7 +9,26 @@ class SupplierService {
     final response = await http.get(url);
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
-      return data.cast<Map<String, dynamic>>();
+      final suppliers = data.cast<Map<String, dynamic>>();
+
+      // Normalize MongoDB ObjectId format to simple string id
+      return suppliers.map((supplier) {
+        final normalized = Map<String, dynamic>.from(supplier);
+
+        // Handle MongoDB ObjectId format
+        if (supplier['_id'] != null) {
+          final id = supplier['_id'];
+          if (id is Map && id['\$oid'] != null) {
+            normalized['id'] = id['\$oid'].toString();
+          } else {
+            normalized['id'] = id.toString();
+          }
+        } else if (supplier['id'] != null) {
+          normalized['id'] = supplier['id'].toString();
+        }
+
+        return normalized;
+      }).toList();
     } else {
       throw Exception('Failed to load suppliers');
     }

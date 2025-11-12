@@ -37,7 +37,7 @@ export class CreditPaymentsService {
       }
       
       // Direct database check to verify credit sale exists
-      const creditSaleExists = await this.connection.db!.collection('creditsales').findOne({
+      const creditSaleExists = await this.connection.db!.collection('credit_sales').findOne({
         _id: new Types.ObjectId(normalizedDto.credit_sale_id)
       });
       
@@ -50,8 +50,8 @@ export class CreditPaymentsService {
       
       // Create and save the payment using Mongoose
       const payment = new this.creditPaymentModel({
-        creditSale_id: new Types.ObjectId(normalizedDto.credit_sale_id),
-        receivedBy_id: new Types.ObjectId(userId),
+        credit_sale_id: new Types.ObjectId(normalizedDto.credit_sale_id),
+        received_by: new Types.ObjectId(userId),
         amount: normalizedDto.amount,
         payment_date: normalizedDto.payment_date ? new Date(normalizedDto.payment_date) : new Date(),
         payment_method: normalizedDto.payment_method || 'cash',
@@ -116,15 +116,15 @@ export class CreditPaymentsService {
 
   async findByCreditSale(creditSaleId: string): Promise<CreditPayment[]> {
     return this.creditPaymentModel
-      .find({ creditSale_id: new Types.ObjectId(creditSaleId) })
-      .populate('receivedBy_id')
+      .find({ credit_sale_id: new Types.ObjectId(creditSaleId) })
+      .populate('received_by')
       .sort({ payment_date: -1 })
       .exec();
   }
 
   async getTotalPaid(creditSaleId: string): Promise<number> {
     const result = await this.creditPaymentModel.aggregate([
-      { $match: { creditSale_id: new Types.ObjectId(creditSaleId) } },
+      { $match: { credit_sale_id: new Types.ObjectId(creditSaleId) } },
       { $group: { _id: null, total: { $sum: '$amount' } } }
     ]).exec();
     

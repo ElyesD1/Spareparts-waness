@@ -27,7 +27,8 @@ class _OperationalExpenseFormState extends State<OperationalExpenseForm> {
 
   String _selectedType = 'other';
   DateTime _selectedDate = DateTime.now();
-  String _selectedWarehouseId = '1';
+  String?
+  _selectedWarehouseId; // Changed to nullable to avoid default invalid value
   String? _createdBy;
 
   List<Map<String, dynamic>> _warehouses = [];
@@ -35,15 +36,15 @@ class _OperationalExpenseFormState extends State<OperationalExpenseForm> {
   bool _loadingData = true;
 
   final List<Map<String, dynamic>> _expenseTypes = [
-    {'value': 'rent', 'label': 'Rent', 'icon': Icons.home},
+    {'value': 'rent', 'label': 'Loyer', 'icon': Icons.home},
     {
       'value': 'electricity',
-      'label': 'Electricity',
+      'label': 'Électricité',
       'icon': Icons.electric_bolt,
     },
-    {'value': 'water', 'label': 'Water', 'icon': Icons.water_drop},
-    {'value': 'fuel', 'label': 'Fuel', 'icon': Icons.local_gas_station},
-    {'value': 'other', 'label': 'Other', 'icon': Icons.more_horiz},
+    {'value': 'water', 'label': 'Eau', 'icon': Icons.water_drop},
+    {'value': 'fuel', 'label': 'Carburant', 'icon': Icons.local_gas_station},
+    {'value': 'other', 'label': 'Autre', 'icon': Icons.more_horiz},
   ];
 
   @override
@@ -62,13 +63,15 @@ class _OperationalExpenseFormState extends State<OperationalExpenseForm> {
       setState(() {
         _warehouses = futures[0] as List<Map<String, dynamic>>;
         final currentUser = futures[1] as Map<String, dynamic>?;
-        _createdBy = currentUser?['id'];
+        // Handle multiple possible ID field names from backend
+        _createdBy =
+            currentUser?['userId'] ?? currentUser?['id'] ?? currentUser?['_id'];
         _loadingData = false;
       });
 
       // Set default warehouse if available
-      if (_warehouses.isNotEmpty && _selectedWarehouseId == 1) {
-        _selectedWarehouseId = _warehouses.first['id'];
+      if (_warehouses.isNotEmpty && _selectedWarehouseId == null) {
+        _selectedWarehouseId = _warehouses.first['id']?.toString();
       }
 
       // Load existing expense data if editing
@@ -88,7 +91,7 @@ class _OperationalExpenseFormState extends State<OperationalExpenseForm> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error loading data: $e')));
+        ).showSnackBar(SnackBar(content: Text('Erreur de chargement: $e')));
       }
     }
   }
@@ -109,10 +112,20 @@ class _OperationalExpenseFormState extends State<OperationalExpenseForm> {
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (_selectedWarehouseId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Veuillez sélectionner un entrepôt')),
+      );
+      return;
+    }
+
     if (_createdBy == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Error: Could not determine current user'),
+          content: Text(
+            'Erreur: Impossible de déterminer l\'utilisateur actuel',
+          ),
         ),
       );
       return;
@@ -126,7 +139,8 @@ class _OperationalExpenseFormState extends State<OperationalExpenseForm> {
         title: _titleController.text.trim(),
         amount: double.parse(_amountController.text.trim()),
         type: _selectedType,
-        warehouseId: _selectedWarehouseId,
+        warehouseId:
+            _selectedWarehouseId!, // Safe to use ! here after null check
         createdBy: _createdBy!,
         date: _selectedDate,
         note:
@@ -140,21 +154,28 @@ class _OperationalExpenseFormState extends State<OperationalExpenseForm> {
           widget.expense!.id!,
           expense,
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Expense updated successfully')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Dépense mise à jour avec succès')),
+          );
+        }
       } else {
         await OperationalExpenseService.createOperationalExpense(expense);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Expense added successfully')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Dépense ajoutée avec succès')),
+          );
+        }
       }
 
+      // The parent will handle Navigator.pop() in onSuccess callback
       widget.onSuccess();
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+      }
     } finally {
       setState(() => _loading = false);
     }
@@ -237,7 +258,7 @@ class _OperationalExpenseFormState extends State<OperationalExpenseForm> {
         child: Form(
           key: _formKey,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: MainAxisSize.max,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header - Fixed at top
@@ -263,7 +284,9 @@ class _OperationalExpenseFormState extends State<OperationalExpenseForm> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isEditing ? 'Edit Expense' : 'Add New Expense',
+                            isEditing
+                                ? 'Modifier Dépense'
+                                : 'Ajouter Nouvelle Dépense',
                             style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -272,8 +295,8 @@ class _OperationalExpenseFormState extends State<OperationalExpenseForm> {
                           ),
                           Text(
                             isEditing
-                                ? 'Update expense details'
-                                : 'Create a new operational expense',
+                                ? 'Mettre à jour les détails de la dépense'
+                                : 'Créer une nouvelle dépense opérationnelle',
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey.shade600,
@@ -416,12 +439,21 @@ class _OperationalExpenseFormState extends State<OperationalExpenseForm> {
                           ),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<String>(
-                            value: _selectedWarehouseId,
+                            value:
+                                (_selectedWarehouseId != null &&
+                                        _warehouses.any(
+                                          (w) =>
+                                              w['id']?.toString() ==
+                                              _selectedWarehouseId,
+                                        ))
+                                    ? _selectedWarehouseId
+                                    : null,
                             decoration: InputDecoration(
                               prefixIcon: const Icon(
                                 Icons.warehouse,
                                 color: Colors.grey,
                               ),
+                              hintText: 'Sélectionner un entrepôt',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(
@@ -450,13 +482,22 @@ class _OperationalExpenseFormState extends State<OperationalExpenseForm> {
                             items:
                                 _warehouses.map((warehouse) {
                                   return DropdownMenuItem<String>(
-                                    value: warehouse['id'],
-                                    child: Text(warehouse['name']),
+                                    value: warehouse['id']?.toString(),
+                                    child: Text(
+                                      warehouse['name'] ??
+                                          'Entrepôt ${warehouse['id']}',
+                                    ),
                                   );
                                 }).toList(),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Veuillez sélectionner un entrepôt';
+                              }
+                              return null;
+                            },
                             onChanged: (value) {
                               setState(() {
-                                _selectedWarehouseId = value!;
+                                _selectedWarehouseId = value;
                               });
                             },
                           ),

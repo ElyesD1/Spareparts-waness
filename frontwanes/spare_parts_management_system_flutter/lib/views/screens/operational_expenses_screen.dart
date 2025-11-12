@@ -15,7 +15,8 @@ class OperationalExpensesScreen extends StatefulWidget {
       _OperationalExpensesScreenState();
 }
 
-class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> with TickerProviderStateMixin {
+class _OperationalExpensesScreenState extends State<OperationalExpensesScreen>
+    with TickerProviderStateMixin {
   List<OperationalExpense> _expenses = [];
   List<OperationalExpense> _filteredExpenses = [];
   bool _loading = true;
@@ -25,9 +26,13 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
   late AnimationController _animationController;
 
   // Responsive breakpoints
-  bool _isMobile(BuildContext context) => MediaQuery.of(context).size.width < 600;
-  bool _isTablet(BuildContext context) => MediaQuery.of(context).size.width >= 600 && MediaQuery.of(context).size.width < 1200;
-  bool _isDesktop(BuildContext context) => MediaQuery.of(context).size.width >= 1200;
+  bool _isMobile(BuildContext context) =>
+      MediaQuery.of(context).size.width < 600;
+  bool _isTablet(BuildContext context) =>
+      MediaQuery.of(context).size.width >= 600 &&
+      MediaQuery.of(context).size.width < 1200;
+  bool _isDesktop(BuildContext context) =>
+      MediaQuery.of(context).size.width >= 1200;
 
   @override
   void initState() {
@@ -50,7 +55,7 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
 
   Future<void> _loadUserRole() async {
     final user = await SessionManager.getUser();
-    if (user != null) {
+    if (user != null && mounted) {
       setState(() {
         _currentUserRole = user['role'] as String?;
       });
@@ -59,46 +64,51 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
 
   Future<void> _loadExpenses() async {
     try {
-      setState(() {
-        _loading = true;
-        _error = null;
-      });
+      if (mounted) {
+        setState(() {
+          _loading = true;
+          _error = null;
+        });
+      }
 
       final expenses = await OperationalExpenseService.getOperationalExpenses();
 
-      if (expenses.isNotEmpty) {
-        final firstExpense = expenses.first;
-      
+      if (mounted) {
+        setState(() {
+          _expenses = expenses;
+          _filteredExpenses = expenses;
+          _loading = false;
+        });
+        _animationController.forward();
       }
-
-      setState(() {
-        _expenses = expenses;
-        _filteredExpenses = expenses;
-        _loading = false;
-      });
-      _animationController.forward();
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
     }
   }
 
   void _filterExpenses() {
     final query = _searchController.text.toLowerCase();
-    setState(() {
-      if (query.isEmpty) {
-        _filteredExpenses = _expenses;
-      } else {
-        _filteredExpenses = _expenses.where((expense) {
-          return expense.title.toLowerCase().contains(query) ||
-              expense.type.toLowerCase().contains(query) ||
-              (expense.warehouseName?.toLowerCase().contains(query) ?? false) ||
-              expense.amount.toString().contains(query);
-        }).toList();
-      }
-    });
+    if (mounted) {
+      setState(() {
+        if (query.isEmpty) {
+          _filteredExpenses = _expenses;
+        } else {
+          _filteredExpenses =
+              _expenses.where((expense) {
+                return expense.title.toLowerCase().contains(query) ||
+                    expense.type.toLowerCase().contains(query) ||
+                    (expense.warehouseName?.toLowerCase().contains(query) ??
+                        false) ||
+                    expense.amount.toString().contains(query);
+              }).toList();
+        }
+      });
+    }
   }
 
   @override
@@ -106,9 +116,12 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       // ✅ DRAWER FOR MOBILE - SIDEBAR EXISTS HERE!
-      drawer: _isMobile(context) ? Drawer(
-        child: Sidebar(selected: SidebarSection.operationalExpenses),
-      ) : null,
+      drawer:
+          _isMobile(context)
+              ? Drawer(
+                child: Sidebar(selected: SidebarSection.operationalExpenses),
+              )
+              : null,
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (_isMobile(context)) {
@@ -127,30 +140,31 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
         children: [
           // Mobile Header WITH MENU BUTTON
           _buildMobileHeaderWithMenu(),
-          
+
           // Content
           Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _error != null
+            child:
+                _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error != null
                     ? _buildErrorState()
                     : SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            // Stats Grid
-                            _buildMobileStats(),
-                            const SizedBox(height: 20),
-                            
-                            // Search Bar
-                            _buildMobileSearchBar(),
-                            const SizedBox(height: 20),
-                            
-                            // Expenses List
-                            _buildMobileExpensesList(),
-                          ],
-                        ),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          // Stats Grid
+                          _buildMobileStats(),
+                          const SizedBox(height: 20),
+
+                          // Search Bar
+                          _buildMobileSearchBar(),
+                          const SizedBox(height: 20),
+
+                          // Expenses List
+                          _buildMobileExpensesList(),
+                        ],
                       ),
+                    ),
           ),
         ],
       ),
@@ -162,51 +176,55 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
       children: [
         // ✅ SIDEBAR - Always visible on desktop/tablet
         Sidebar(selected: SidebarSection.operationalExpenses),
-        
+
         // Main Content
         Expanded(
-          child: _loading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
+          child:
+              _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
                   ? _buildErrorState()
                   : AnimatedBuilder(
-                      animation: _animationController,
-                      builder: (context, child) {
-                        return Transform.translate(
-                          offset: Offset(0, 20 * (1 - _animationController.value)),
-                          child: Opacity(
-                            opacity: _animationController.value,
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: Container(
-                        color: Colors.white,
-                        child: Column(
-                          children: [
-                            // Desktop Header
-                            _buildDesktopHeader(),
-                            
-                            // Main Content
-                            Expanded(
-                              child: SingleChildScrollView(
-                                padding: const EdgeInsets.all(24),
-                                child: Column(
-                                  children: [
-                                    // Stats Row
-                                    _buildDesktopStats(),
-                                    const SizedBox(height: 32),
-                                    
-                                    // Content Area
-                                    _buildDesktopContent(),
-                                  ],
-                                ),
+                    animation: _animationController,
+                    builder: (context, child) {
+                      return Transform.translate(
+                        offset: Offset(
+                          0,
+                          20 * (1 - _animationController.value),
+                        ),
+                        child: Opacity(
+                          opacity: _animationController.value,
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: Container(
+                      color: Colors.white,
+                      child: Column(
+                        children: [
+                          // Desktop Header
+                          _buildDesktopHeader(),
+
+                          // Main Content
+                          Expanded(
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                children: [
+                                  // Stats Row
+                                  _buildDesktopStats(),
+                                  const SizedBox(height: 32),
+
+                                  // Content Area
+                                  _buildDesktopContent(),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
+                  ),
         ),
       ],
     );
@@ -233,17 +251,18 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
         children: [
           // ✅ MENU BUTTON TO OPEN SIDEBAR DRAWER
           Builder(
-            builder: (context) => Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: IconButton(
-                onPressed: () => Scaffold.of(context).openDrawer(),
-                icon: const Icon(Icons.menu, color: Colors.white, size: 24),
-                tooltip: 'Ouvrir le menu',
-              ),
-            ),
+            builder:
+                (context) => Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                    icon: const Icon(Icons.menu, color: Colors.white, size: 24),
+                    tooltip: 'Ouvrir le menu',
+                  ),
+                ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -286,13 +305,17 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
 
   Widget _buildMobileStats() {
     final totalExpenses = _expenses.length;
-    final totalAmount = _expenses.fold<double>(0, (sum, expense) => sum + expense.amount);
+    final totalAmount = _expenses.fold<double>(
+      0,
+      (sum, expense) => sum + expense.amount,
+    );
     final avgAmount = totalExpenses > 0 ? totalAmount / totalExpenses : 0.0;
-    final thisMonthExpenses = _expenses.where((expense) {
-      final now = DateTime.now();
-      final expenseDate = expense.date;
-      return expenseDate.year == now.year && expenseDate.month == now.month;
-    }).length;
+    final thisMonthExpenses =
+        _expenses.where((expense) {
+          final now = DateTime.now();
+          final expenseDate = expense.date;
+          return expenseDate.year == now.year && expenseDate.month == now.month;
+        }).length;
 
     return GridView.count(
       crossAxisCount: 2,
@@ -330,7 +353,12 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
     );
   }
 
-  Widget _buildMobileStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildMobileStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -400,18 +428,22 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
         decoration: InputDecoration(
           hintText: 'Rechercher des dépenses...',
           prefixIcon: Icon(Icons.search, color: Colors.indigo.shade300),
-          suffixIcon: _searchController.text.isNotEmpty
-              ? IconButton(
-                  icon: Icon(Icons.clear, color: Colors.grey[400]),
-                  onPressed: () {
-                    _searchController.clear();
-                    _filterExpenses();
-                  },
-                )
-              : null,
+          suffixIcon:
+              _searchController.text.isNotEmpty
+                  ? IconButton(
+                    icon: Icon(Icons.clear, color: Colors.grey[400]),
+                    onPressed: () {
+                      _searchController.clear();
+                      _filterExpenses();
+                    },
+                  )
+                  : null,
           filled: false,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
         ),
       ),
     );
@@ -423,7 +455,10 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
     }
 
     return Column(
-      children: _filteredExpenses.map((expense) => _buildMobileExpenseCard(expense)).toList(),
+      children:
+          _filteredExpenses
+              .map((expense) => _buildMobileExpenseCard(expense))
+              .toList(),
     );
   }
 
@@ -455,7 +490,11 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
                   color: Colors.indigo.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.account_balance_wallet, color: Colors.indigo, size: 20),
+                child: Icon(
+                  Icons.account_balance_wallet,
+                  color: Colors.indigo,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -472,7 +511,7 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
             ],
           ),
           const SizedBox(height: 16),
-          
+
           // Amount Display
           Container(
             padding: const EdgeInsets.all(16),
@@ -496,7 +535,7 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Info Rows
           _buildMobileInfoRow(
             Icons.location_on_outlined,
@@ -515,18 +554,14 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
             'Date',
             '${expense.date.day}/${expense.date.month}/${expense.date.year}',
           ),
-          
+
           if (expense.note != null && expense.note!.isNotEmpty) ...[
             const SizedBox(height: 12),
-            _buildMobileInfoRow(
-              Icons.note_outlined,
-              'Note',
-              expense.note!,
-            ),
+            _buildMobileInfoRow(Icons.note_outlined, 'Note', expense.note!),
           ],
-          
+
           const SizedBox(height: 20),
-          
+
           // Action Buttons
           Row(
             children: [
@@ -601,9 +636,12 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
-                color: value.contains('Chargement') || value.contains('Loading') || value.contains('Unknown')
-                    ? Colors.orange.shade600
-                    : const Color(0xFF1E293B),
+                color:
+                    value.contains('Chargement') ||
+                            value.contains('Loading') ||
+                            value.contains('Unknown')
+                        ? Colors.orange.shade600
+                        : const Color(0xFF1E293B),
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -618,9 +656,7 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[200]!),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.05),
@@ -668,10 +704,7 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
                 const SizedBox(height: 4),
                 Text(
                   'Gérer et suivre les dépenses opérationnelles',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 16),
                 ),
               ],
             ),
@@ -697,13 +730,17 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
 
   Widget _buildDesktopStats() {
     final totalExpenses = _expenses.length;
-    final totalAmount = _expenses.fold<double>(0, (sum, expense) => sum + expense.amount);
+    final totalAmount = _expenses.fold<double>(
+      0,
+      (sum, expense) => sum + expense.amount,
+    );
     final avgAmount = totalExpenses > 0 ? totalAmount / totalExpenses : 0.0;
-    final thisMonthExpenses = _expenses.where((expense) {
-      final now = DateTime.now();
-      final expenseDate = expense.date;
-      return expenseDate.year == now.year && expenseDate.month == now.month;
-    }).length;
+    final thisMonthExpenses =
+        _expenses.where((expense) {
+          final now = DateTime.now();
+          final expenseDate = expense.date;
+          return expenseDate.year == now.year && expenseDate.month == now.month;
+        }).length;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -712,17 +749,37 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
             children: [
               Row(
                 children: [
-                  _buildDesktopStatCard('Total Dépenses', totalExpenses.toString(), Icons.receipt_long, Colors.blue),
+                  _buildDesktopStatCard(
+                    'Total Dépenses',
+                    totalExpenses.toString(),
+                    Icons.receipt_long,
+                    Colors.blue,
+                  ),
                   const SizedBox(width: 20),
-                  _buildDesktopStatCard('Montant Total', '${totalAmount.toStringAsFixed(2)} DNT', Icons.attach_money, Colors.green),
+                  _buildDesktopStatCard(
+                    'Montant Total',
+                    '${totalAmount.toStringAsFixed(2)} DNT',
+                    Icons.attach_money,
+                    Colors.green,
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
               Row(
                 children: [
-                  _buildDesktopStatCard('Montant Moyen', '${avgAmount.toStringAsFixed(2)} DNT', Icons.analytics, Colors.orange),
+                  _buildDesktopStatCard(
+                    'Montant Moyen',
+                    '${avgAmount.toStringAsFixed(2)} DNT',
+                    Icons.analytics,
+                    Colors.orange,
+                  ),
                   const SizedBox(width: 20),
-                  _buildDesktopStatCard('Ce Mois', thisMonthExpenses.toString(), Icons.calendar_month, Colors.purple),
+                  _buildDesktopStatCard(
+                    'Ce Mois',
+                    thisMonthExpenses.toString(),
+                    Icons.calendar_month,
+                    Colors.purple,
+                  ),
                 ],
               ),
             ],
@@ -730,13 +787,33 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
         } else {
           return Row(
             children: [
-              _buildDesktopStatCard('Total Dépenses', totalExpenses.toString(), Icons.receipt_long, Colors.blue),
+              _buildDesktopStatCard(
+                'Total Dépenses',
+                totalExpenses.toString(),
+                Icons.receipt_long,
+                Colors.blue,
+              ),
               const SizedBox(width: 20),
-              _buildDesktopStatCard('Montant Total', '${totalAmount.toStringAsFixed(2)} DNT', Icons.attach_money, Colors.green),
+              _buildDesktopStatCard(
+                'Montant Total',
+                '${totalAmount.toStringAsFixed(2)} DNT',
+                Icons.attach_money,
+                Colors.green,
+              ),
               const SizedBox(width: 20),
-              _buildDesktopStatCard('Montant Moyen', '${avgAmount.toStringAsFixed(2)} DNT', Icons.analytics, Colors.orange),
+              _buildDesktopStatCard(
+                'Montant Moyen',
+                '${avgAmount.toStringAsFixed(2)} DNT',
+                Icons.analytics,
+                Colors.orange,
+              ),
               const SizedBox(width: 20),
-              _buildDesktopStatCard('Ce Mois', thisMonthExpenses.toString(), Icons.calendar_month, Colors.purple),
+              _buildDesktopStatCard(
+                'Ce Mois',
+                thisMonthExpenses.toString(),
+                Icons.calendar_month,
+                Colors.purple,
+              ),
             ],
           );
         }
@@ -744,7 +821,12 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
     );
   }
 
-  Widget _buildDesktopStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildDesktopStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(28),
@@ -775,7 +857,10 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -852,13 +937,10 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
               children: [
                 const Text(
                   'Liste des Dépenses',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                 ),
                 const Spacer(),
-                
+
                 // Search Bar
                 Container(
                   width: 300,
@@ -871,24 +953,35 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
                     controller: _searchController,
                     decoration: InputDecoration(
                       hintText: 'Rechercher...',
-                      prefixIcon: Icon(Icons.search, color: Colors.indigo.shade300, size: 18),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(Icons.clear, color: Colors.grey[400]),
-                              onPressed: () {
-                                _searchController.clear();
-                                _filterExpenses();
-                              },
-                            )
-                          : null,
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Colors.indigo.shade300,
+                        size: 18,
+                      ),
+                      suffixIcon:
+                          _searchController.text.isNotEmpty
+                              ? IconButton(
+                                icon: Icon(
+                                  Icons.clear,
+                                  color: Colors.grey[400],
+                                ),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  _filterExpenses();
+                                },
+                              )
+                              : null,
                       filled: false,
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 16),
-                
+
                 // Results count
                 Text(
                   '${_filteredExpenses.length} dépenses',
@@ -897,13 +990,14 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
               ],
             ),
           ),
-          
+
           // Content
           Container(
             constraints: const BoxConstraints(minHeight: 400),
-            child: _filteredExpenses.isEmpty
-                ? _buildEmptyState()
-                : _buildDesktopExpensesList(),
+            child:
+                _filteredExpenses.isEmpty
+                    ? _buildEmptyState()
+                    : _buildDesktopExpensesList(),
           ),
         ],
       ),
@@ -943,7 +1037,7 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
               ),
             ),
             const SizedBox(width: 20),
-            
+
             // Main Info
             Expanded(
               flex: 3,
@@ -961,7 +1055,11 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.location_on, size: 14, color: Colors.grey[500]),
+                      Icon(
+                        Icons.location_on,
+                        size: 14,
+                        color: Colors.grey[500],
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         expense.warehouseName ?? 'Chargement...',
@@ -972,13 +1070,10 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
                 ],
               ),
             ),
-            
+
             // Type Badge
-            Expanded(
-              flex: 1,
-              child: _buildTypeBadge(expense.type),
-            ),
-            
+            Expanded(flex: 1, child: _buildTypeBadge(expense.type)),
+
             // Date
             Expanded(
               flex: 1,
@@ -987,7 +1082,7 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
                 style: TextStyle(color: Colors.grey[600]),
               ),
             ),
-            
+
             // Amount
             Expanded(
               flex: 1,
@@ -1000,20 +1095,17 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
                 ),
               ),
             ),
-            
+
             // Created By
             Expanded(
               flex: 1,
               child: Text(
                 expense.createdByName ?? 'Chargement...',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[500],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            
+
             // Actions
             SizedBox(
               width: 120,
@@ -1129,9 +1221,7 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
             const SizedBox(height: 8),
             Text(
               _error!,
-              style: TextStyle(
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(color: Colors.grey[500]),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -1182,9 +1272,7 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
             const SizedBox(height: 8),
             Text(
               'Ajoutez votre première dépense opérationnelle pour commencer',
-              style: TextStyle(
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(color: Colors.grey[500]),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -1231,38 +1319,43 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
   Future<void> _deleteExpense(OperationalExpense expense) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(8),
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.warning, color: Colors.red.shade600),
+                ),
+                const SizedBox(width: 12),
+                const Text('Supprimer Dépense'),
+              ],
+            ),
+            content: Text(
+              'Êtes-vous sûr de vouloir supprimer "${expense.title}" ?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Annuler'),
               ),
-              child: Icon(Icons.warning, color: Colors.red.shade600),
-            ),
-            const SizedBox(width: 12),
-            const Text('Supprimer Dépense'),
-          ],
-        ),
-        content: Text('Êtes-vous sûr de vouloir supprimer "${expense.title}" ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Annuler'),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Supprimer'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Supprimer'),
-          ),
-        ],
-      ),
     );
 
     if (confirmed == true) {
@@ -1280,119 +1373,121 @@ class _OperationalExpensesScreenState extends State<OperationalExpensesScreen> w
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => OperationalExpenseForm(
-        expense: expense,
-        onSuccess: () {
-          Navigator.of(context).pop();
-          _loadExpenses();
-        },
-      ),
+      builder:
+          (context) => OperationalExpenseForm(
+            expense: expense,
+            onSuccess: () {
+              if (mounted) {
+                Navigator.of(context).pop();
+                _loadExpenses();
+              }
+            },
+          ),
     );
   }
 
   void _showExpenseDetails(OperationalExpense expense) {
-   
-
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.indigo.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.account_balance_wallet,
-                color: Colors.indigo,
-                size: 20,
-              ),
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            const SizedBox(width: 12),
-            const Text('Détails de la Dépense'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildDetailRow('Titre', expense.title),
-            _buildDetailRow(
-              'Montant',
-              '${expense.amount.toStringAsFixed(2)} DNT',
-            ),
-            _buildDetailRow('Type', expense.type.toUpperCase()),
-            _buildDetailRow(
-              'Entrepôt',
-              expense.warehouseName ?? 'Chargement...',
-            ),
-            _buildDetailRow(
-              'Créé par',
-              expense.createdByName ?? 'Chargement...',
-            ),
-            _buildDetailRow(
-              'Date',
-              '${expense.date.day}/${expense.date.month}/${expense.date.year}',
-            ),
-            if (expense.note != null && expense.note!.isNotEmpty)
-              _buildDetailRow('Note', expense.note!),
-            // Show warehouse info if it's still unknown
-            if (expense.warehouseName != null &&
-                expense.warehouseName!.startsWith('Unknown Warehouse')) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.orange.shade200),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.indigo.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.account_balance_wallet,
+                    color: Colors.indigo,
+                    size: 20,
+                  ),
                 ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      color: Colors.orange.shade600,
-                      size: 16,
+                const SizedBox(width: 12),
+                const Text('Détails de la Dépense'),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDetailRow('Titre', expense.title),
+                _buildDetailRow(
+                  'Montant',
+                  '${expense.amount.toStringAsFixed(2)} DNT',
+                ),
+                _buildDetailRow('Type', expense.type.toUpperCase()),
+                _buildDetailRow(
+                  'Entrepôt',
+                  expense.warehouseName ?? 'Chargement...',
+                ),
+                _buildDetailRow(
+                  'Créé par',
+                  expense.createdByName ?? 'Chargement...',
+                ),
+                _buildDetailRow(
+                  'Date',
+                  '${expense.date.day}/${expense.date.month}/${expense.date.year}',
+                ),
+                if (expense.note != null && expense.note!.isNotEmpty)
+                  _buildDetailRow('Note', expense.note!),
+                // Show warehouse info if it's still unknown
+                if (expense.warehouseName != null &&
+                    expense.warehouseName!.startsWith('Unknown Warehouse')) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.orange.shade200),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Nom d\'entrepôt introuvable dans la base de données pour l\'ID ${expense.warehouseId}',
-                        style: TextStyle(
-                          color: Colors.orange.shade700,
-                          fontSize: 12,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: Colors.orange.shade600,
+                          size: 16,
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Nom d\'entrepôt introuvable dans la base de données pour l\'ID ${expense.warehouseId}',
+                            style: TextStyle(
+                              color: Colors.orange.shade700,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Fermer'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _showExpenseForm(expense);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.indigo,
+                  foregroundColor: Colors.white,
                 ),
+                child: const Text('Modifier'),
               ),
             ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Fermer'),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _showExpenseForm(expense);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.indigo,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Modifier'),
-          ),
-        ],
-      ),
     );
   }
 }

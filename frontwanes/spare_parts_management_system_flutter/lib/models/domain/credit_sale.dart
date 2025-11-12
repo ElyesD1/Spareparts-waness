@@ -45,9 +45,17 @@ class CreditSale {
     // Debug logging to see what we're receiving
 
     try {
+      // Handle both 'customer' and 'customer_id' fields from backend
+      final customerData = json['customer'] ?? json['customer_id'];
+
       return CreditSale(
         id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
-        customer: Customer.fromJson(json['customer'] ?? {}),
+        customer:
+            customerData != null && customerData is Map
+                ? Customer.fromJson(Map<String, dynamic>.from(customerData))
+                : Customer.fromJson(
+                  {},
+                ), // Fallback to empty customer if not populated
         warehouseId: json['warehouse_id']?.toString() ?? '',
         createdBy: json['created_by']?.toString() ?? '',
         saleDate:

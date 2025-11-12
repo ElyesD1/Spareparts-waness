@@ -47,6 +47,14 @@ export class PurchaseReturn {
   @Prop({ default: null })
   notes?: string;
 
+  /** Approved By */
+  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  approved_by?: Types.ObjectId;
+
+  /** Approved At */
+  @Prop({ type: Date, default: null })
+  approved_at?: Date;
+
   created_at?: Date;
   updated_at?: Date;
 }

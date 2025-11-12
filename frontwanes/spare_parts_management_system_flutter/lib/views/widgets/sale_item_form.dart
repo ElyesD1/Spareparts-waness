@@ -165,7 +165,6 @@ class _SaleItemFormState extends State<SaleItemForm> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = MediaQuery.of(context).size.width < 768;
-        final isTablet = MediaQuery.of(context).size.width < 1024;
 
         if (isMobile) {
           // Mobile layout - vertical stack
@@ -317,166 +316,158 @@ class _SaleItemFormState extends State<SaleItemForm> {
             ],
           );
         } else {
-          // Desktop/Tablet layout - horizontal row
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minWidth: isTablet ? 500 : 600),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: isTablet ? 200 : 280,
-                    child: DropdownButtonFormField<String>(
-                      value: item.productId,
-                      decoration: InputDecoration(
-                        labelText: 'Product',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                      isExpanded: true,
-                      menuMaxHeight: 200,
-                      dropdownColor: Colors.white,
-                      items:
-                          _filteredProducts.map((product) {
-                            final price = _parsePrice(product.unitPrice);
-                            return DropdownMenuItem<String>(
-                              value: product.id,
-                              child: Container(
-                                width: isTablet ? 180 : 260,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 2,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        product.name,
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '${price.toStringAsFixed(2)} DNT',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
+          // Desktop/Tablet layout - horizontal row with proper constraints
+          return Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: DropdownButtonFormField<String>(
+                  value: item.productId,
+                  decoration: InputDecoration(
+                    labelText: 'Product',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                  isExpanded: true,
+                  menuMaxHeight: 200,
+                  dropdownColor: Colors.white,
+                  items:
+                      _filteredProducts.map((product) {
+                        final price = _parsePrice(product.unitPrice);
+                        return DropdownMenuItem<String>(
+                          value: product.id,
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  product.name,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 14,
+                                  ),
                                 ),
                               ),
-                            );
-                          }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          _updateItem(index, productId: value);
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  SizedBox(
-                    width: isTablet ? 80 : 100,
-                    child: TextFormField(
-                      initialValue: item.quantity.toString(),
-                      decoration: InputDecoration(
-                        labelText: 'Quantity',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) {
-                        final quantity = int.tryParse(value);
-                        if (quantity != null && quantity > 0) {
-                          _updateItem(index, quantity: quantity);
-                        }
-                      },
-                      validator: (value) {
-                        final quantity = int.tryParse(value ?? '');
-                        if (quantity == null || quantity <= 0) {
-                          return 'Enter a valid quantity';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  SizedBox(
-                    width: isTablet ? 100 : 120,
-                    child: TextFormField(
-                      initialValue: displayUnitPrice.toStringAsFixed(2),
-                      decoration: InputDecoration(
-                        labelText: 'Unit Price',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        suffixText: 'DNT',
-                      ),
-                      keyboardType: TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      onChanged: (value) {
-                        final price = double.tryParse(value);
-                        if (price != null && price > 0) {
-                          _updateItem(index, unitPrice: price);
-                        }
-                      },
-                      validator: (value) {
-                        final price = double.tryParse(value ?? '');
-                        if (price == null || price <= 0) {
-                          return 'Enter a valid price';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  SizedBox(
-                    width: isTablet ? 100 : 120,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '${totalPrice.toStringAsFixed(2)} DNT',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1B3C34),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${price.toStringAsFixed(2)} DNT',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.delete,
-                            color: Color(0xFFF44336),
-                          ),
-                          onPressed: () => _removeItem(index),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                        );
+                      }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      _updateItem(index, productId: value);
+                    }
+                  },
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 80,
+                child: TextFormField(
+                  initialValue: item.quantity.toString(),
+                  decoration: InputDecoration(
+                    labelText: 'Quantity',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    final quantity = int.tryParse(value);
+                    if (quantity != null && quantity > 0) {
+                      _updateItem(index, quantity: quantity);
+                    }
+                  },
+                  validator: (value) {
+                    final quantity = int.tryParse(value ?? '');
+                    if (quantity == null || quantity <= 0) {
+                      return 'Enter a valid quantity';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 100,
+                child: TextFormField(
+                  initialValue: displayUnitPrice.toStringAsFixed(2),
+                  decoration: InputDecoration(
+                    labelText: 'Unit Price',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    suffixText: 'DNT',
+                  ),
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  onChanged: (value) {
+                    final price = double.tryParse(value);
+                    if (price != null && price > 0) {
+                      _updateItem(index, unitPrice: price);
+                    }
+                  },
+                  validator: (value) {
+                    final price = double.tryParse(value ?? '');
+                    if (price == null || price <= 0) {
+                      return 'Enter a valid price';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Total and Delete button
+              Flexible(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        '${totalPrice.toStringAsFixed(2)} DNT',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1B3C34),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.delete,
+                        color: Color(0xFFF44336),
+                        size: 20,
+                      ),
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(),
+                      onPressed: () => _removeItem(index),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           );
         }
       },
@@ -639,8 +630,8 @@ class _SaleItemFormState extends State<SaleItemForm> {
                   ),
                   if (_filteredProducts.isNotEmpty) ...[
                     const SizedBox(height: 8),
-                    Container(
-                      constraints: const BoxConstraints(maxHeight: 200),
+                    SizedBox(
+                      height: 200,
                       child: ListView.builder(
                         shrinkWrap: true,
                         itemCount: _filteredProducts.length,
@@ -691,8 +682,8 @@ class _SaleItemFormState extends State<SaleItemForm> {
                   ),
                   if (_filteredProducts.isNotEmpty) ...[
                     const SizedBox(height: 8),
-                    Container(
-                      constraints: const BoxConstraints(maxHeight: 200),
+                    SizedBox(
+                      height: 200,
                       child: ListView.builder(
                         shrinkWrap: true,
                         itemCount: _filteredProducts.length,

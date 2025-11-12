@@ -16,9 +16,21 @@ import 'views/screens/signup_screen.dart';
 import 'routes/routes.dart';
 import 'package:go_router/go_router.dart';
 import 'views/widgets/sidebar.dart';
+import 'views/widgets/error_boundary.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Set up global error handler for friendly error messages
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return FriendlyErrorWidget(errorDetails: details);
+  };
+
+  // Catch Flutter framework errors
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+  };
+
   final prefs = await SharedPreferences.getInstance();
   final String? token = prefs.getString('access_token');
   final bool rememberMe = prefs.getBool('remember_me') ?? false;

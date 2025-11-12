@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Optional, Inject } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
 import { Model, Types, Connection, ClientSession } from 'mongoose';
 import { CreditSale, CreditSaleDocument } from './credit-sale.entity';
@@ -7,6 +7,7 @@ import { CustomersService } from '../customers/customers.service';
 import { ProductStocksService } from '../product-stocks/product-stocks.service';
 import { CreditSaleItem, CreditSaleItemDocument } from '../credit-sale-items/credit-sale-item.entity';
 import { SalesService } from '../sales/sales.service';
+import { CreditPayment, CreditPaymentDocument } from '../credit-payments/credit-payment.entity';
 
 @Injectable()
 export class CreditSalesService {
@@ -15,6 +16,8 @@ export class CreditSalesService {
     private creditSaleModel: Model<CreditSaleDocument>,
     @InjectModel(CreditSaleItem.name)
     private creditSaleItemModel: Model<CreditSaleItemDocument>,
+    @InjectModel(CreditPayment.name)
+    private creditPaymentModel: Model<CreditPaymentDocument>,
     private customersService: CustomersService,
     private productStocksService: ProductStocksService,
     @InjectConnection() private readonly connection: Connection,
@@ -107,8 +110,9 @@ export class CreditSalesService {
       }
     }
 
-    const session: ClientSession = await this.connection.startSession();
-    session.startTransaction();
+    // Remove transaction for standalone MongoDB
+    // const session: ClientSession = await this.connection.startSession();
+    // session.startTransaction();
 
     try {
       // Create credit sale
@@ -127,7 +131,7 @@ export class CreditSalesService {
         status: 'active',
       });
 
-      const savedCreditSale = await creditSale.save({ session });
+      const savedCreditSale = await creditSale.save();
       const creditSaleId = (savedCreditSale as any)._id.toString();
       console.log('Credit sale saved with ID:', creditSaleId);
 
@@ -166,15 +170,15 @@ export class CreditSalesService {
           total_price: totalPrice,
         });
 
-        await creditSaleItem.save({ session });
+        await creditSaleItem.save();
         console.log('Credit sale item saved successfully');
       }
 
-      await session.commitTransaction();
+      // await session.commitTransaction();
       console.log('=== BACKEND: CREDIT SALE CREATION SUCCESS ===');
-      console.log('Transaction committed successfully');
+      console.log('All items saved successfully');
       
-      // Update customer balance and product stocks AFTER the transaction is committed
+      // Update customer balance and product stocks
       try {
         await this.customersService.updateBalance(createCreditSaleDto.customer_id.toString(), creditAmount);
         console.log('Customer balance updated successfully');
@@ -199,22 +203,36 @@ export class CreditSalesService {
     } catch (error) {
       console.log('=== BACKEND: CREDIT SALE CREATION ERROR ===');
       console.log('Error:', error);
-      await session.abortTransaction();
-      console.log('Transaction rolled back');
+      // No transaction to rollback in standalone MongoDB
       throw error;
-    } finally {
-      session.endSession();
-      console.log('Session ended');
     }
   }
 
   async findAll(): Promise<CreditSale[]> {
-    return this.creditSaleModel.find()
+    const creditSales = await this.creditSaleModel.find()
       .populate('customer_id')
       .populate('warehouse_id')
       .populate('created_by')
       .sort({ createdAt: -1 })
       .exec();
+
+    // Populate payments for each credit sale using direct model query
+    const creditSalesWithPayments = await Promise.all(
+      creditSales.map(async (sale) => {
+        const saleObj = sale.toObject();
+        // Query payments directly from the model
+        const payments = await this.creditPaymentModel
+          .find({ credit_sale_id: (sale as any)._id })
+          .populate('received_by')
+          .exec();
+        return {
+          ...saleObj,
+          payments: payments.map(p => p.toObject()),
+        };
+      })
+    );
+
+    return creditSalesWithPayments as any;
   }
 
   async findOne(id: string): Promise<CreditSale> {

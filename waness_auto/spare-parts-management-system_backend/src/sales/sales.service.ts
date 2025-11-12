@@ -101,7 +101,10 @@ export class SalesService {
   async findAll(): Promise<any[]> {
     console.log('[SalesService] Finding all sales');
     
-    const sales = await this.saleModel.find().exec();
+    const sales = await this.saleModel.find()
+      .populate('warehouse_id')
+      .populate('created_by')
+      .exec();
     console.log('[SalesService] Found', sales.length, 'sales in database');
     console.log('[SalesService] Raw sales data:', sales);
     
@@ -116,6 +119,10 @@ export class SalesService {
         const saleWithItems = {
           ...saleObj,
           id: saleId,
+          warehouse: saleObj.warehouse_id ? {
+            id: saleObj.warehouse_id._id?.toString() || saleObj.warehouse_id.toString(),
+            name: saleObj.warehouse_id.name || 'Unknown'
+          } : null,
           items: items.map((item: any) => ({
             unit_price: item.unit_price,
             supplier_price: item.product_id?.supplier_price ?? null,

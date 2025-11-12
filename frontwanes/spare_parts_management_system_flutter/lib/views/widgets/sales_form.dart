@@ -75,6 +75,13 @@ class _SalesFormState extends State<SalesForm> {
         _loadingData = false;
       });
 
+      print('🔍 [SalesForm] Loaded warehouses:');
+      for (var wh in _warehouses) {
+        print(
+          '  - Warehouse: ${wh['name']} (id: ${wh['id']}, _id: ${wh['_id']})',
+        );
+      }
+
       // Normalize user ID field - MongoDB uses _id, frontend uses id
       if (_currentUser != null) {
         if (_currentUser!['id'] == null && _currentUser!['_id'] != null) {
@@ -97,7 +104,14 @@ class _SalesFormState extends State<SalesForm> {
             );
           }
         }
-        // Otherwise, leave unselected (user must choose)
+
+        // If still null and only one warehouse, select it automatically
+        if (_selectedWarehouseId == null && _warehouses.length == 1) {
+          _selectedWarehouseId = _warehouses.first['id']?.toString();
+          print(
+            '🔄 [SalesForm] Auto-selected only warehouse: $_selectedWarehouseId',
+          );
+        }
       }
 
       // Set current user ID if available
@@ -182,24 +196,30 @@ class _SalesFormState extends State<SalesForm> {
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
     if (_saleItems.isEmpty) {
-      AppToast.error(context, 'Please add at least one item to the sale');
-      return;
-    }
-
-    // Ensure we have a valid warehouse selected
-    if (_selectedWarehouseId == null) {
       AppToast.error(
         context,
-        'warehouse_id is required and cannot be null. Please select a warehouse.',
+        'Veuillez ajouter au moins un article à la vente',
       );
       return;
     }
 
+    // Ensure we have a valid warehouse selected (NOT the string "null")
+    if (_selectedWarehouseId == null ||
+        _selectedWarehouseId == 'null' ||
+        _selectedWarehouseId!.isEmpty) {
+      print('❌ [SalesForm] Warehouse validation failed: $_selectedWarehouseId');
+      print(
+        '🔍 [SalesForm] Available warehouses: ${_warehouses.map((w) => w['id']).toList()}',
+      );
+      AppToast.error(context, 'Veuillez sélectionner un entrepôt');
+      return;
+    }
+
     // Ensure we have a valid created_by value
-    if (_createdBy == null) {
+    if (_createdBy == null || _createdBy!.isEmpty) {
       AppToast.error(
         context,
-        'Error: Could not determine current user. Please log in again.',
+        'Erreur: Impossible de déterminer l\'utilisateur actuel. Veuillez vous reconnecter.',
       );
       return;
     }
@@ -208,7 +228,8 @@ class _SalesFormState extends State<SalesForm> {
 
     try {
       final saleData = {
-        'warehouse_id': _selectedWarehouseId,
+        'warehouse_id':
+            _selectedWarehouseId, // This will now never be "null" string
         'created_by': _createdBy,
         'customer_name': _customerNameController.text.trim(),
         'sale_date': DateFormat(
@@ -251,15 +272,15 @@ class _SalesFormState extends State<SalesForm> {
           if (item.id != null) {
             await _saleItemService.updateSaleItem(item.id!, item);
           } else {
+            // Get sale ID as string (MongoDB ObjectId)
+            final saleId =
+                sale['_id']?.toString() ?? sale['id']?.toString() ?? '';
             final newItem = SaleItem(
-              saleId:
-                  sale['id'] is int
-                      ? sale['id']
-                      : int.parse(sale['id'].toString()),
+              saleId: saleId,
               productId: item.productId,
               quantity: item.quantity,
               unitPrice: item.unitPrice,
-              product: item.product, // This is now Product?
+              product: item.product,
             );
             await _saleItemService.addSaleItem(newItem);
           }
@@ -280,8 +301,11 @@ class _SalesFormState extends State<SalesForm> {
 
           print('➕ [SalesForm] Creating sale item with unit price: $unitPrice');
 
+          // Get sale ID as string (MongoDB ObjectId)
           final saleId =
-              sale['id'] is int ? sale['id'] : int.parse(sale['id'].toString());
+              sale['_id']?.toString() ?? sale['id']?.toString() ?? '';
+          print('🔍 [SalesForm] Sale ID for items: $saleId');
+
           final newItem = SaleItem(
             saleId: saleId,
             productId: item.productId,
@@ -563,28 +587,32 @@ class _SalesFormState extends State<SalesForm> {
                     child:
                         _loadingData
                             ? const Text(
-                              'Loading warehouses...',
+                              'Chargement des entrepôts...',
                               style: TextStyle(color: Color(0xFFB0B3C7)),
                             )
                             : DropdownButton<String>(
                               value:
-                                  _warehouses.any(
-                                        (w) =>
-                                            w['id'].toString() ==
-                                            _selectedWarehouseId,
-                                      )
+                                  (_selectedWarehouseId != null &&
+                                          _selectedWarehouseId != 'null' &&
+                                          _warehouses.any(
+                                            (w) =>
+                                                w['id']?.toString() ==
+                                                _selectedWarehouseId,
+                                          ))
                                       ? _selectedWarehouseId
                                       : null,
                               isExpanded: true,
                               underline: Container(),
-                              hint: const Text('Select Warehouse'),
+                              hint: const Text('Sélectionner un entrepôt'),
                               items:
                                   _warehouses.map((warehouse) {
+                                    final warehouseId =
+                                        warehouse['id']?.toString() ?? '';
                                     return DropdownMenuItem<String>(
-                                      value: warehouse['id'].toString(),
+                                      value: warehouseId,
                                       child: Text(
                                         warehouse['name'] ??
-                                            'Warehouse ${warehouse['id']}',
+                                            'Entrepôt $warehouseId',
                                         style: const TextStyle(
                                           color: Color(0xFF1B3C34),
                                         ),
@@ -592,10 +620,18 @@ class _SalesFormState extends State<SalesForm> {
                                     );
                                   }).toList(),
                               onChanged: (value) {
-                                if (value != null) {
+                                print(
+                                  '🔄 [SalesForm] Warehouse dropdown changed to: $value',
+                                );
+                                if (value != null &&
+                                    value != 'null' &&
+                                    value.isNotEmpty) {
                                   setState(() {
                                     _selectedWarehouseId = value;
                                   });
+                                  print(
+                                    '✅ [SalesForm] Warehouse set to: $_selectedWarehouseId',
+                                  );
                                 }
                               },
                             ),
@@ -684,42 +720,39 @@ class _SalesFormState extends State<SalesForm> {
             const SizedBox(height: 32),
 
             // Submit Button
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _loading ? null : _submitForm,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6C63FF),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                    child:
-                        _loading
-                            ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
-                            : Text(
-                              isEditing ? 'Modifier Vente' : 'Ajouter Vente',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _loading ? null : _submitForm,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6C63FF),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  elevation: 0,
                 ),
-              ],
+                child:
+                    _loading
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                        : Text(
+                          isEditing ? 'Modifier Vente' : 'Ajouter Vente',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+              ),
             ),
           ],
         ),

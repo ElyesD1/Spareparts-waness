@@ -16,4 +16,4 @@ import { CustomersModule } from '../customers/customers.module';
   providers: [CreditPaymentsService],
   exports: [CreditPaymentsService, MongooseModule],
 })
-export class CreditPaymentsModule {} 
+export class CreditPaymentsModule {}

@@ -3,14 +3,10 @@ import { IsNumber, IsPositive, IsArray, IsDateString, IsOptional, ValidateNested
 import { Type, Transform } from 'class-transformer';
 
 export class CreateCreditSaleDto {
-  @IsNumber()
-  @Type(() => Number)
-  @IsPositive()
+  @IsString()
   readonly customer_id: string;
 
-  @IsNumber()
-  @Type(() => Number)
-  @IsPositive()
+  @IsString()
   readonly warehouse_id: string;
 
   @IsOptional()

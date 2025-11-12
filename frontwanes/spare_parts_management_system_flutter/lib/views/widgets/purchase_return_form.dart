@@ -122,7 +122,9 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  existing == null ? 'Add Return Item' : 'Edit Return Item',
+                  existing == null
+                      ? 'Ajouter Article Retour'
+                      : 'Modifier Article Retour',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
@@ -169,14 +171,17 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
                       });
                     },
                     decoration: InputDecoration(
-                      labelText: 'Product *',
+                      labelText: 'Produit *',
                       border: const OutlineInputBorder(),
                       prefixIcon: const Icon(Icons.inventory_2),
                       filled: true,
                       fillColor: Colors.grey.shade50,
                     ),
                     validator:
-                        (v) => v == null ? 'Please select a product' : null,
+                        (v) =>
+                            v == null
+                                ? 'Veuillez sélectionner un produit'
+                                : null,
                   ),
 
                   // Warning if product is already added
@@ -199,7 +204,7 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'This product is already in the return list. Adding it again will update the existing item.',
+                              'Ce produit est déjà dans la liste de retour. L\'ajouter à nouveau mettra à jour l\'article existant.',
                               style: TextStyle(
                                 color: Colors.orange.shade700,
                                 fontSize: 12,
@@ -218,7 +223,7 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
                         child: TextFormField(
                           controller: qtyCtrl,
                           decoration: InputDecoration(
-                            labelText: 'Quantity *',
+                            labelText: 'Quantité *',
                             border: const OutlineInputBorder(),
                             prefixIcon: const Icon(Icons.numbers),
                             filled: true,
@@ -228,7 +233,7 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
                           validator: (v) {
                             final qty = int.tryParse(v ?? '');
                             if (qty == null || qty <= 0) {
-                              return 'Please enter a valid quantity';
+                              return 'Veuillez entrer une quantité valide';
                             }
                             return null;
                           },
@@ -239,14 +244,13 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
                         child: TextFormField(
                           controller: priceCtrl,
                           decoration: InputDecoration(
-                            labelText: 'Supplier Price *',
+                            labelText: 'Prix Fournisseur *',
                             border: const OutlineInputBorder(),
                             prefixIcon: const Icon(Icons.attach_money),
                             prefixText: '\$',
                             filled: true,
                             fillColor: Colors.grey.shade50,
-                            helperText:
-                                'Price to be credited back from supplier',
+                            helperText: 'Prix à créditer du fournisseur',
                           ),
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
@@ -254,7 +258,7 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
                           validator: (v) {
                             final price = double.tryParse(v ?? '');
                             if (price == null || price <= 0) {
-                              return 'Please enter a valid supplier price greater than 0';
+                              return 'Veuillez entrer un prix fournisseur valide supérieur à 0';
                             }
                             return null;
                           },
@@ -304,12 +308,12 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
                     // Dialog closed
                   });
                 },
-                child: const Text('Cancel'),
+                child: const Text('Annuler'),
               ),
               ElevatedButton(
                 onPressed: () async {
                   if (selectedProduct == null) {
-                    AppToast.error(context, 'Please select a product');
+                    AppToast.error(context, 'Veuillez sélectionner un produit');
                     return;
                   }
 
@@ -394,8 +398,8 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
                     AppToast.success(
                       context,
                       existing == null
-                          ? 'Item added successfully'
-                          : 'Item updated successfully',
+                          ? 'Article ajouté avec succès'
+                          : 'Article mis à jour avec succès',
                     );
                   }
                 },
@@ -403,7 +407,9 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
                   backgroundColor: const Color(0xFF6C63FF),
                   foregroundColor: Colors.white,
                 ),
-                child: Text(existing == null ? 'Add Item' : 'Update Item'),
+                child: Text(
+                  existing == null ? 'Ajouter Article' : 'Modifier Article',
+                ),
               ),
             ],
           ),
@@ -426,13 +432,21 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
       return;
     }
 
-    if (_selectedSupplierId == null || _selectedWarehouseId == null) {
-      AppToast.error(context, 'Please select supplier and warehouse');
+    if (_selectedSupplierId == null ||
+        _selectedSupplierId!.isEmpty ||
+        _selectedSupplierId == 'null' ||
+        _selectedWarehouseId == null ||
+        _selectedWarehouseId!.isEmpty ||
+        _selectedWarehouseId == 'null') {
+      AppToast.error(
+        context,
+        'Veuillez sélectionner un fournisseur et un entrepôt',
+      );
       return;
     }
 
     if (_items.isEmpty) {
-      AppToast.error(context, 'Please add at least one item');
+      AppToast.error(context, 'Veuillez ajouter au moins un article');
       return;
     }
 
@@ -607,8 +621,8 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
                         children: [
                           Text(
                             isEditing
-                                ? 'Edit Purchase Return'
-                                : 'Create Purchase Return',
+                                ? 'Modifier Retour d\'Achat'
+                                : 'Créer Retour d\'Achat',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 24,
@@ -618,8 +632,8 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
                           const SizedBox(height: 4),
                           Text(
                             isEditing
-                                ? 'Update return details and items'
-                                : 'Record products being returned to supplier for credit',
+                                ? 'Mettre à jour les détails et articles du retour'
+                                : 'Enregistrer les produits retournés au fournisseur pour crédit',
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.9),
                               fontSize: 14,
@@ -640,143 +654,157 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Basic Information Section
-                      _buildSection('Basic Information', Icons.info_outline, [
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            final isTight = constraints.maxWidth < 600;
-                            if (isTight) {
-                              return Column(
-                                children: [
-                                  _buildDropdownField(
-                                    'Supplier *',
-                                    _selectedSupplierId,
-                                    _suppliers
-                                        .map(
-                                          (s) => DropdownMenuItem(
-                                            value: s['id']?.toString(),
-                                            child: Text(s['name'] as String),
-                                          ),
-                                        )
-                                        .toList(),
-                                    (v) =>
-                                        setState(() => _selectedSupplierId = v),
-                                    validator:
-                                        (v) =>
-                                            v == null
-                                                ? 'Supplier is required'
-                                                : null,
-                                    icon: Icons.local_shipping,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _buildDropdownField(
-                                    'Warehouse *',
-                                    _selectedWarehouseId,
-                                    _warehouses
-                                        .map(
-                                          (w) => DropdownMenuItem(
-                                            value: w['id']?.toString(),
-                                            child: Text(w['name'] as String),
-                                          ),
-                                        )
-                                        .toList(),
-                                    (v) => setState(
-                                      () => _selectedWarehouseId = v,
+                      _buildSection(
+                        'Informations de Base',
+                        Icons.info_outline,
+                        [
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final isTight = constraints.maxWidth < 600;
+                              if (isTight) {
+                                return Column(
+                                  children: [
+                                    _buildDropdownField(
+                                      'Fournisseur *',
+                                      _selectedSupplierId,
+                                      _suppliers
+                                          .map(
+                                            (s) => DropdownMenuItem(
+                                              value: s['id']?.toString(),
+                                              child: Text(s['name'] as String),
+                                            ),
+                                          )
+                                          .toList(),
+                                      (v) => setState(
+                                        () => _selectedSupplierId = v,
+                                      ),
+                                      validator:
+                                          (v) =>
+                                              v == null ||
+                                                      v.isEmpty ||
+                                                      v == 'null'
+                                                  ? 'Le fournisseur est requis'
+                                                  : null,
+                                      icon: Icons.local_shipping,
                                     ),
-                                    validator:
-                                        (v) =>
-                                            v == null
-                                                ? 'Warehouse is required'
-                                                : null,
-                                    icon: Icons.home_work,
+                                    const SizedBox(height: 16),
+                                    _buildDropdownField(
+                                      'Entrepôt *',
+                                      _selectedWarehouseId,
+                                      _warehouses
+                                          .map(
+                                            (w) => DropdownMenuItem(
+                                              value: w['id']?.toString(),
+                                              child: Text(w['name'] as String),
+                                            ),
+                                          )
+                                          .toList(),
+                                      (v) => setState(
+                                        () => _selectedWarehouseId = v,
+                                      ),
+                                      validator:
+                                          (v) =>
+                                              v == null ||
+                                                      v.isEmpty ||
+                                                      v == 'null'
+                                                  ? 'L\'entrepôt est requis'
+                                                  : null,
+                                      icon: Icons.home_work,
+                                    ),
+                                  ],
+                                );
+                              }
+                              return Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildDropdownField(
+                                      'Fournisseur *',
+                                      _selectedSupplierId,
+                                      _suppliers
+                                          .map(
+                                            (s) => DropdownMenuItem(
+                                              value: s['id']?.toString(),
+                                              child: Text(s['name'] as String),
+                                            ),
+                                          )
+                                          .toList(),
+                                      (v) => setState(
+                                        () => _selectedSupplierId = v,
+                                      ),
+                                      validator:
+                                          (v) =>
+                                              v == null ||
+                                                      v.isEmpty ||
+                                                      v == 'null'
+                                                  ? 'Le fournisseur est requis'
+                                                  : null,
+                                      icon: Icons.local_shipping,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: _buildDropdownField(
+                                      'Entrepôt *',
+                                      _selectedWarehouseId,
+                                      _warehouses
+                                          .map(
+                                            (w) => DropdownMenuItem(
+                                              value: w['id']?.toString(),
+                                              child: Text(w['name'] as String),
+                                            ),
+                                          )
+                                          .toList(),
+                                      (v) => setState(
+                                        () => _selectedWarehouseId = v,
+                                      ),
+                                      validator:
+                                          (v) =>
+                                              v == null ||
+                                                      v.isEmpty ||
+                                                      v == 'null'
+                                                  ? 'L\'entrepôt est requis'
+                                                  : null,
+                                      icon: Icons.home_work,
+                                    ),
                                   ),
                                 ],
                               );
-                            }
-                            return Row(
-                              children: [
-                                Expanded(
-                                  child: _buildDropdownField(
-                                    'Supplier *',
-                                    _selectedSupplierId,
-                                    _suppliers
-                                        .map(
-                                          (s) => DropdownMenuItem(
-                                            value: s['id']?.toString(),
-                                            child: Text(s['name'] as String),
-                                          ),
-                                        )
-                                        .toList(),
-                                    (v) =>
-                                        setState(() => _selectedSupplierId = v),
-                                    validator:
-                                        (v) =>
-                                            v == null
-                                                ? 'Supplier is required'
-                                                : null,
-                                    icon: Icons.local_shipping,
-                                  ),
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildTextField(
+                                  'Raison du Retour *',
+                                  _reasonController,
+                                  maxLines: 2,
+                                  validator:
+                                      (v) =>
+                                          v?.trim().isEmpty == true
+                                              ? 'La raison est requise'
+                                              : null,
+                                  icon: Icons.description,
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _buildDropdownField(
-                                    'Warehouse *',
-                                    _selectedWarehouseId,
-                                    _warehouses
-                                        .map(
-                                          (w) => DropdownMenuItem(
-                                            value: w['id']?.toString(),
-                                            child: Text(w['name'] as String),
-                                          ),
-                                        )
-                                        .toList(),
-                                    (v) => setState(
-                                      () => _selectedWarehouseId = v,
-                                    ),
-                                    validator:
-                                        (v) =>
-                                            v == null
-                                                ? 'Warehouse is required'
-                                                : null,
-                                    icon: Icons.home_work,
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildTextField(
-                                'Return Reason *',
-                                _reasonController,
-                                maxLines: 2,
-                                validator:
-                                    (v) =>
-                                        v?.trim().isEmpty == true
-                                            ? 'Reason is required'
-                                            : null,
-                                icon: Icons.description,
                               ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(child: _buildDateField()),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        _buildTextField(
-                          'Notes',
-                          _notesController,
-                          maxLines: 3,
-                          icon: Icons.note,
-                        ),
-                      ]),
+                              const SizedBox(width: 16),
+                              Expanded(child: _buildDateField()),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          _buildTextField(
+                            'Notes',
+                            _notesController,
+                            maxLines: 3,
+                            icon: Icons.note,
+                          ),
+                        ],
+                      ),
 
                       const SizedBox(height: 24),
 
                       // Items Section
-                      _buildSection('Return Items', Icons.inventory_2, [
+                      _buildSection('Articles à Retourner', Icons.inventory_2, [
                         LayoutBuilder(
                           builder: (context, constraints) {
                             final isTight = constraints.maxWidth < 400;
@@ -818,7 +846,7 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
                                           ),
                                           const SizedBox(width: 8),
                                           const Text(
-                                            'Add Item',
+                                            'Ajouter Article',
                                             style: TextStyle(
                                               color: Colors.white,
                                               fontWeight: FontWeight.w600,
@@ -867,7 +895,7 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
                                         ),
                                         const SizedBox(width: 8),
                                         const Text(
-                                          'Add Item',
+                                          'Ajouter Article',
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.w600,
@@ -942,7 +970,7 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
                           vertical: 12,
                         ),
                       ),
-                      child: const Text('Cancel'),
+                      child: const Text('Annuler'),
                     ),
                     const SizedBox(width: 16),
                     ElevatedButton(
@@ -979,7 +1007,7 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
                                 ),
                               )
                               : Text(
-                                isEditing ? 'Update Return' : 'Create Return',
+                                isEditing ? 'Mettre à Jour' : 'Créer Retour',
                               ),
                     ),
                   ],
@@ -1034,8 +1062,11 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
     String? Function(String?)? validator,
     IconData? icon,
   }) {
+    // Ensure the value exists in items, otherwise set to null
+    final validValue = items.any((item) => item.value == value) ? value : null;
+
     return DropdownButtonFormField<String>(
-      value: value,
+      value: validValue,
       items: items,
       onChanged: onChanged,
       validator: validator,
@@ -1085,7 +1116,7 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
       },
       child: InputDecorator(
         decoration: InputDecoration(
-          labelText: 'Return Date *',
+          labelText: 'Date de Retour *',
           border: const OutlineInputBorder(),
           prefixIcon: const Icon(Icons.calendar_today),
           filled: true,
@@ -1116,7 +1147,7 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No items added yet',
+            'Aucun article ajouté',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -1125,7 +1156,7 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Click "Add Item" to start adding products to return',
+            'Cliquez sur "Ajouter Article" pour commencer à ajouter des produits à retourner',
             style: TextStyle(color: Colors.grey.shade500),
           ),
         ],
@@ -1195,7 +1226,7 @@ class _PurchaseReturnFormState extends State<PurchaseReturnForm> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        _buildInfoChip('Qty', item.quantity.toString()),
+                        _buildInfoChip('Qté', item.quantity.toString()),
                         _buildInfoChip(
                           'Supplier',
                           '\$${item.unitPrice.toStringAsFixed(2)}',

@@ -23,9 +23,6 @@ export class PurchaseReturnsService {
   ) {}
 
   async create(createPurchaseReturnDto: CreatePurchaseReturnDto, userId: string): Promise<PurchaseReturn> {
-    const session = await this.connection.startSession();
-    session.startTransaction();
-
     try {
       // Calculate total
       const totalAmount = createPurchaseReturnDto.items.reduce((sum, item) => sum + item.total_price, 0);
@@ -34,37 +31,31 @@ export class PurchaseReturnsService {
       const purchaseReturn = new this.purchaseReturnModel({
         supplier_id: new Types.ObjectId(createPurchaseReturnDto.supplier_id),
         warehouse_id: new Types.ObjectId(createPurchaseReturnDto.warehouse_id),
+        return_date: new Date(createPurchaseReturnDto.return_date),
         reason: createPurchaseReturnDto.reason,
+        notes: createPurchaseReturnDto.notes,
         created_by: new Types.ObjectId(userId),
         total_amount: totalAmount,
         status: ReturnStatus.PENDING,
       });
 
-      const savedPurchaseReturn = await purchaseReturn.save({ session });
+      const savedPurchaseReturn = await purchaseReturn.save();
 
       // Insert items
       for (const item of createPurchaseReturnDto.items) {
-        await this.connection.db!.collection('purchasereturnitems').insertOne(
-          {
-            purchase_return_id: savedPurchaseReturn._id,
-            product_id: new Types.ObjectId(item.product_id),
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            total_price: item.total_price,
-          },
-          { session }
-        );
+        await this.connection.db!.collection('purchasereturnitems').insertOne({
+          purchase_return_id: savedPurchaseReturn._id,
+          product_id: new Types.ObjectId(item.product_id),
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total_price: item.total_price,
+        });
       }
-
-      await session.commitTransaction();
 
       // Return the complete purchase return with relations
       return this.findOne((savedPurchaseReturn._id as Types.ObjectId).toString());
     } catch (error) {
-      await session.abortTransaction();
       throw error;
-    } finally {
-      session.endSession();
     }
   }
 
@@ -75,9 +66,6 @@ export class PurchaseReturnsService {
       throw new BadRequestException('Purchase return can only be approved when status is pending');
     }
 
-    const session = await this.connection.startSession();
-    session.startTransaction();
-
     try {
       // Update status
       await this.purchaseReturnModel.findByIdAndUpdate(
@@ -86,8 +74,7 @@ export class PurchaseReturnsService {
           status: ReturnStatus.APPROVED,
           approved_by: new Types.ObjectId(userId),
           approved_at: new Date()
-        },
-        { session }
+        }
       ).exec();
 
       // Get items
@@ -123,16 +110,11 @@ export class PurchaseReturnsService {
         created_by: new Types.ObjectId(userId),
       });
 
-      await credit.save({ session });
-
-      await session.commitTransaction();
+      await credit.save();
 
       return this.findOne(id);
     } catch (error) {
-      await session.abortTransaction();
       throw error;
-    } finally {
-      session.endSession();
     }
   }
 

@@ -56,8 +56,9 @@ class CreditSalesService {
   Future<List<CreditSale>> getAllCreditSales() async {
     try {
       final headers = await _getHeaders();
+      // Use with-calculations endpoint to get total_paid and remaining_amount
       final response = await http.get(
-        Uri.parse('$baseUrl/credit-sales'),
+        Uri.parse('$baseUrl/credit-sales/with-calculations'),
         headers: headers,
       );
       if (response.statusCode == 200) {

@@ -1,9 +1,8 @@
-import { IsNumber, IsPositive, Min } from 'class-validator';
+import { IsNumber, IsPositive, Min, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreateCreditSaleItemDto {
-  @IsNumber()
-  @IsPositive()
+  @IsString()
   readonly product_id: string;
 
   @IsNumber()

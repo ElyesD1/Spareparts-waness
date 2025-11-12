@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CreditSalesService } from './credit-sales.service';
 import { CreditSalesController } from './credit-sales.controller';
 import { CreditSale, CreditSaleSchema } from './credit-sale.entity';
 import { CreditSaleItem, CreditSaleItemSchema } from '../credit-sale-items/credit-sale-item.entity';
+import { CreditPayment, CreditPaymentSchema } from '../credit-payments/credit-payment.entity';
 import { CustomersModule } from '../customers/customers.module';
 import { ProductStocksModule } from '../product-stocks/product-stocks.module';
 import { SalesModule } from '../sales/sales.module';
@@ -12,11 +13,12 @@ import { SalesModule } from '../sales/sales.module';
   imports: [
     MongooseModule.forFeature([
       { name: CreditSale.name, schema: CreditSaleSchema },
-      { name: CreditSaleItem.name, schema: CreditSaleItemSchema }
+      { name: CreditSaleItem.name, schema: CreditSaleItemSchema },
+      { name: CreditPayment.name, schema: CreditPaymentSchema },
     ]),
     CustomersModule,
     ProductStocksModule,
-    SalesModule
+    SalesModule,
   ],
   controllers: [CreditSalesController],
   providers: [CreditSalesService],
