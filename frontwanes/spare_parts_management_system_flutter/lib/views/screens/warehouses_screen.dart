@@ -13,7 +13,8 @@ class WarehousesScreen extends StatefulWidget {
   State<WarehousesScreen> createState() => _WarehousesScreenState();
 }
 
-class _WarehousesScreenState extends State<WarehousesScreen> with TickerProviderStateMixin {
+class _WarehousesScreenState extends State<WarehousesScreen>
+    with TickerProviderStateMixin {
   final WarehouseService _warehouseService = WarehouseService();
   List<Map<String, dynamic>> _warehouses = [];
   List<Map<String, dynamic>> _filteredWarehouses = [];
@@ -22,7 +23,7 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
   int _currentPage = 1;
   static const int _warehousesPerPage = 10;
   late AnimationController _animationController;
-  
+
   // Search and filter controllers
   final TextEditingController _searchController = TextEditingController();
   String _selectedFilter = 'all';
@@ -65,11 +66,15 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
 
   List<Map<String, dynamic>> get _paginatedWarehouses {
     final start = (_currentPage - 1) * _warehousesPerPage;
-    final end = (_currentPage * _warehousesPerPage).clamp(0, _filteredWarehouses.length);
+    final end = (_currentPage * _warehousesPerPage).clamp(
+      0,
+      _filteredWarehouses.length,
+    );
     return _filteredWarehouses.sublist(start, end);
   }
 
-  int get _totalPages => (_filteredWarehouses.length / _warehousesPerPage).ceil().clamp(1, 999);
+  int get _totalPages =>
+      (_filteredWarehouses.length / _warehousesPerPage).ceil().clamp(1, 999);
 
   void _goToPage(int page) {
     setState(() {
@@ -115,15 +120,15 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
             // Modern Page Header
             _buildModernHeader(),
             const SizedBox(height: 32),
-            
+
             // Stats Cards
             _buildModernStats(),
             const SizedBox(height: 32),
-            
+
             // Search and Actions Section
             _buildSearchAndActions(),
             const SizedBox(height: 24),
-            
+
             // Warehouses Grid/List
             _buildModernWarehousesList(),
           ],
@@ -133,15 +138,17 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
   }
 
   Widget _buildModernHeader() {
+    final isMobile = ResponsiveHelper.isMobile(context);
+
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(isMobile ? 20 : 32),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(isMobile ? 16 : 24),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -150,149 +157,245 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.warehouse_rounded,
-              color: Colors.white,
-              size: 32,
-            ),
-          ),
-          const SizedBox(width: 24),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Gestion des Entrepôts',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+      child:
+          isMobile
+              ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.warehouse_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Gestion des Entrepôts',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Gérez vos entrepôts',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.white.withOpacity(0.8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Gérez vos entrepôts et optimisez votre stockage',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white.withOpacity(0.8),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.trending_up,
+                          color: Colors.green.shade300,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '+15% ce mois',
+                          style: TextStyle(
+                            color: Colors.green.shade300,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.trending_up,
-                  color: Colors.green.shade300,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '+15% ce mois',
-                  style: TextStyle(
-                    color: Colors.green.shade300,
-                    fontWeight: FontWeight.w600,
+                ],
+              )
+              : Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(
+                      Icons.warehouse_rounded,
+                      color: Colors.white,
+                      size: 32,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Gestion des Entrepôts',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Gérez vos entrepôts et optimisez votre stockage',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white.withOpacity(0.8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.trending_up,
+                          color: Colors.green.shade300,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '+15% ce mois',
+                          style: TextStyle(
+                            color: Colors.green.shade300,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
     );
   }
 
   Widget _buildModernStats() {
     final totalWarehouses = _warehouses.length;
-    final activeLocations = _warehouses.map((w) => w['location']).toSet().length;
+    final activeLocations =
+        _warehouses.map((w) => w['location']).toSet().length;
     final totalCapacity = totalWarehouses * 1000;
 
     return ResponsiveHelper.isMobile(context)
         ? Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(child: _buildModernStatCard(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: _buildModernStatCard(
                     'Total Entrepôts',
                     totalWarehouses.toString(),
                     Icons.warehouse_rounded,
                     const Color(0xFF3B82F6),
                     const Color(0xFFEBF8FF),
-                  )),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildModernStatCard(
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildModernStatCard(
                     'Emplacements',
                     activeLocations.toString(),
                     Icons.location_on_rounded,
                     const Color(0xFFF59E0B),
                     const Color(0xFFFEF3C7),
-                  )),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(child: _buildModernStatCard(
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildModernStatCard(
                     'Capacité Totale',
                     '${totalCapacity} m²',
                     Icons.inventory_rounded,
                     const Color(0xFF10B981),
                     const Color(0xFFD1FAE5),
-                  )),
-                  const SizedBox(width: 16),
-                  Expanded(child: Container()), // Empty space
-                ],
-              ),
-            ],
-          )
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(child: Container()), // Empty space
+              ],
+            ),
+          ],
+        )
         : Row(
-            children: [
-              Expanded(child: _buildModernStatCard(
+          children: [
+            Expanded(
+              child: _buildModernStatCard(
                 'Total Entrepôts',
                 totalWarehouses.toString(),
                 Icons.warehouse_rounded,
                 const Color(0xFF3B82F6),
                 const Color(0xFFEBF8FF),
-              )),
-              const SizedBox(width: 20),
-              Expanded(child: _buildModernStatCard(
+              ),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: _buildModernStatCard(
                 'Emplacements Actifs',
                 activeLocations.toString(),
                 Icons.location_on_rounded,
                 const Color(0xFFF59E0B),
                 const Color(0xFFFEF3C7),
-              )),
-              const SizedBox(width: 20),
-              Expanded(child: _buildModernStatCard(
+              ),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: _buildModernStatCard(
                 'Capacité Totale',
                 '${totalCapacity} m²',
                 Icons.inventory_rounded,
                 const Color(0xFF10B981),
                 const Color(0xFFD1FAE5),
-              )),
-              const SizedBox(width: 20),
-              Expanded(child: Container()), // Empty space
-            ],
-          );
+              ),
+            ),
+            const SizedBox(width: 20),
+            Expanded(child: Container()), // Empty space
+          ],
+        );
   }
 
-  Widget _buildModernStatCard(String title, String value, IconData icon, Color color, Color bgColor) {
+  Widget _buildModernStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+    Color bgColor,
+  ) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -305,10 +408,7 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(
-          color: Colors.grey.withOpacity(0.08),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.grey.withOpacity(0.08), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,11 +421,7 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
                   color: bgColor,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 24,
-                ),
+                child: Icon(icon, color: color, size: 24),
               ),
               const Spacer(),
               Container(
@@ -393,31 +489,32 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
           ),
         ],
       ),
-      child: ResponsiveHelper.isMobile(context)
-          ? Column(
-              children: [
-                _buildModernSearchBar(),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(child: _buildFilterDropdown()),
-                    const SizedBox(width: 12),
-                    _buildMobileAddButton(),
-                  ],
-                ),
-              ],
-            )
-          : Row(
-              children: [
-                Expanded(flex: 2, child: _buildModernSearchBar()),
-                const SizedBox(width: 20),
-                Expanded(child: _buildFilterDropdown()),
-                const SizedBox(width: 20),
-                _buildAddButton(),
-                const SizedBox(width: 12),
-                _buildRefreshButton(),
-              ],
-            ),
+      child:
+          ResponsiveHelper.isMobile(context)
+              ? Column(
+                children: [
+                  _buildModernSearchBar(),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(child: _buildFilterDropdown()),
+                      const SizedBox(width: 12),
+                      _buildMobileAddButton(),
+                    ],
+                  ),
+                ],
+              )
+              : Row(
+                children: [
+                  Expanded(flex: 2, child: _buildModernSearchBar()),
+                  const SizedBox(width: 20),
+                  Expanded(child: _buildFilterDropdown()),
+                  const SizedBox(width: 20),
+                  _buildAddButton(),
+                  const SizedBox(width: 12),
+                  _buildRefreshButton(),
+                ],
+              ),
     );
   }
 
@@ -435,7 +532,10 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
           hintStyle: TextStyle(color: Colors.grey[500]),
           prefixIcon: Icon(Icons.search_rounded, color: Colors.grey[400]),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 16,
+          ),
         ),
         onChanged: _onSearchChanged,
       ),
@@ -454,7 +554,10 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
         child: DropdownButton<String>(
           value: _selectedFilter,
           hint: Text('Filtrer', style: TextStyle(color: Colors.grey[500])),
-          icon: Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey[400]),
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: Colors.grey[400],
+          ),
           items: const [
             DropdownMenuItem(value: 'all', child: Text('Tous')),
             DropdownMenuItem(value: 'active', child: Text('Actifs')),
@@ -561,7 +664,11 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
           onTap: _fetchWarehouses,
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Icon(Icons.refresh_rounded, color: Colors.grey[600], size: 20),
+            child: Icon(
+              Icons.refresh_rounded,
+              color: Colors.grey[600],
+              size: 20,
+            ),
           ),
         ),
       ),
@@ -598,11 +705,7 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
         child: Center(
           child: Column(
             children: [
-              Icon(
-                Icons.warehouse_outlined,
-                size: 64,
-                color: Colors.grey[400],
-              ),
+              Icon(Icons.warehouse_outlined, size: 64, color: Colors.grey[400]),
               const SizedBox(height: 16),
               Text(
                 'Aucun entrepôt trouvé',
@@ -635,9 +738,10 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
           ),
         ],
       ),
-      child: ResponsiveHelper.isMobile(context)
-          ? _buildMobileWarehouseGrid()
-          : _buildDesktopWarehouseTable(),
+      child:
+          ResponsiveHelper.isMobile(context)
+              ? _buildMobileWarehouseGrid()
+              : _buildDesktopWarehouseTable(),
     );
   }
 
@@ -694,7 +798,10 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.blue.shade50,
                   borderRadius: BorderRadius.circular(8),
@@ -769,10 +876,9 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: _filteredWarehouses.length,
-                  separatorBuilder: (context, index) => Divider(
-                    height: 1,
-                    color: Colors.grey.shade200,
-                  ),
+                  separatorBuilder:
+                      (context, index) =>
+                          Divider(height: 1, color: Colors.grey.shade200),
                   itemBuilder: (context, index) {
                     return _buildModernWarehouseRow(_filteredWarehouses[index]);
                   },
@@ -832,22 +938,20 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
                   const SizedBox(height: 4),
                   Text(
                     warehouse['location'] ?? 'Emplacement non défini',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.info_outline, size: 16, color: Colors.grey[600]),
+                      Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: Colors.grey[600],
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Entrepôt disponible',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -863,28 +967,32 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
                   _deleteWarehouse(warehouse);
                 }
               },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit, size: 16),
-                      SizedBox(width: 8),
-                      Text('Modifier'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, size: 16, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Supprimer', style: TextStyle(color: Colors.red)),
-                    ],
-                  ),
-                ),
-              ],
+              itemBuilder:
+                  (context) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, size: 16),
+                          SizedBox(width: 8),
+                          Text('Modifier'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, size: 16, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text(
+                            'Supprimer',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
             ),
           ],
         ),
@@ -931,10 +1039,7 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
             flex: 2,
             child: Text(
               warehouse['location'] ?? 'Non défini',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
           ),
           Container(
@@ -949,28 +1054,32 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
                   _deleteWarehouse(warehouse);
                 }
               },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit, size: 16),
-                      SizedBox(width: 8),
-                      Text('Modifier'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, size: 16, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Supprimer', style: TextStyle(color: Colors.red)),
-                    ],
-                  ),
-                ),
-              ],
+              itemBuilder:
+                  (context) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, size: 16),
+                          SizedBox(width: 8),
+                          Text('Modifier'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, size: 16, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text(
+                            'Supprimer',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
             ),
           ),
         ],
@@ -980,85 +1089,91 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
 
   Widget _buildStats() {
     final totalWarehouses = _warehouses.length;
-    final activeLocations = _warehouses.map((w) => w['location']).toSet().length;
+    final activeLocations =
+        _warehouses.map((w) => w['location']).toSet().length;
     final totalCapacity = totalWarehouses * 1000;
 
     return ResponsiveHelper.isMobile(context)
         ? Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      'Total',
-                      totalWarehouses.toString(),
-                      Icons.warehouse_outlined,
-                      Colors.teal,
-                    ),
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    'Total',
+                    totalWarehouses.toString(),
+                    Icons.warehouse_outlined,
+                    Colors.teal,
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildStatCard(
-                      'Emplacements',
-                      activeLocations.toString(),
-                      Icons.location_on_outlined,
-                      Colors.orange,
-                    ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildStatCard(
+                    'Emplacements',
+                    activeLocations.toString(),
+                    Icons.location_on_outlined,
+                    Colors.orange,
                   ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      'Capacité',
-                      '${totalCapacity} m²',
-                      Icons.area_chart_outlined,
-                      Colors.blue,
-                    ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    'Capacité',
+                    '${totalCapacity} m²',
+                    Icons.area_chart_outlined,
+                    Colors.blue,
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(child: Container()),
-                ],
-              ),
-            ],
-          )
+                ),
+                const SizedBox(width: 16),
+                Expanded(child: Container()),
+              ],
+            ),
+          ],
+        )
         : Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  'Total Entrepôts',
-                  totalWarehouses.toString(),
-                  Icons.warehouse,
-                  Colors.teal,
-                ),
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                'Total Entrepôts',
+                totalWarehouses.toString(),
+                Icons.warehouse,
+                Colors.teal,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildStatCard(
-                  'Emplacements Actifs',
-                  activeLocations.toString(),
-                  Icons.location_on,
-                  Colors.orange,
-                ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildStatCard(
+                'Emplacements Actifs',
+                activeLocations.toString(),
+                Icons.location_on,
+                Colors.orange,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildStatCard(
-                  'Capacité Totale',
-                  '${totalCapacity} m²',
-                  Icons.area_chart,
-                  Colors.blue,
-                ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildStatCard(
+                'Capacité Totale',
+                '${totalCapacity} m²',
+                Icons.area_chart,
+                Colors.blue,
               ),
-              const SizedBox(width: 16),
-              Expanded(child: Container()),
-            ],
-          );
+            ),
+            const SizedBox(width: 16),
+            Expanded(child: Container()),
+          ],
+        );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1084,11 +1199,7 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
                   color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 20,
-                ),
+                child: Icon(icon, color: color, size: 20),
               ),
               const Spacer(),
             ],
@@ -1103,13 +1214,7 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
+          Text(title, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
         ],
       ),
     );
@@ -1163,7 +1268,10 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
                   items: const [
                     DropdownMenuItem(value: 'all', child: Text('Tous')),
                     DropdownMenuItem(value: 'active', child: Text('Actifs')),
-                    DropdownMenuItem(value: 'inactive', child: Text('Inactifs')),
+                    DropdownMenuItem(
+                      value: 'inactive',
+                      child: Text('Inactifs'),
+                    ),
                   ],
                   onChanged: (value) {
                     setState(() {
@@ -1177,7 +1285,7 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
           ],
         ),
         const SizedBox(height: 24),
-        
+
         // Warehouses List/Grid
         ResponsiveHelper.isMobile(context)
             ? _buildMobileWarehousesList()
@@ -1189,22 +1297,25 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
   void _onSearchChanged(String value) {
     setState(() {
       _search = value;
-      _filteredWarehouses = _warehouses.where((warehouse) {
-        final matchesSearch = warehouse['name']
-            .toString()
-            .toLowerCase()
-            .contains(value.toLowerCase()) ||
-            warehouse['location']
-                .toString()
-                .toLowerCase()
-                .contains(value.toLowerCase());
-        
-        final matchesFilter = _selectedFilter == 'all' ||
-            (_selectedFilter == 'active' && warehouse['status'] == 'active') ||
-            (_selectedFilter == 'inactive' && warehouse['status'] != 'active');
-        
-        return matchesSearch && matchesFilter;
-      }).toList();
+      _filteredWarehouses =
+          _warehouses.where((warehouse) {
+            final matchesSearch =
+                warehouse['name'].toString().toLowerCase().contains(
+                  value.toLowerCase(),
+                ) ||
+                warehouse['location'].toString().toLowerCase().contains(
+                  value.toLowerCase(),
+                );
+
+            final matchesFilter =
+                _selectedFilter == 'all' ||
+                (_selectedFilter == 'active' &&
+                    warehouse['status'] == 'active') ||
+                (_selectedFilter == 'inactive' &&
+                    warehouse['status'] != 'active');
+
+            return matchesSearch && matchesFilter;
+          }).toList();
     });
   }
 
@@ -1224,7 +1335,9 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
 
     return Column(
       children: [
-        ...(_paginatedWarehouses.map((warehouse) => _buildMobileWarehouseCard(warehouse))),
+        ...(_paginatedWarehouses.map(
+          (warehouse) => _buildMobileWarehouseCard(warehouse),
+        )),
         if (_totalPages > 1) _buildMobilePagination(),
       ],
     );
@@ -1281,7 +1394,7 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
             ],
           ),
           const SizedBox(height: 12),
-          
+
           // Location Info
           Row(
             children: [
@@ -1290,15 +1403,12 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
               Expanded(
                 child: Text(
                   warehouse['location'] ?? 'Emplacement non défini',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),
               ),
             ],
           ),
-          
+
           if (warehouse['capacity'] != null) ...[
             const SizedBox(height: 8),
             Row(
@@ -1307,17 +1417,14 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
                 const SizedBox(width: 8),
                 Text(
                   'Capacité: ${warehouse['capacity']} m²',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),
               ],
             ),
           ],
-          
+
           const SizedBox(height: 16),
-          
+
           // Action Buttons
           Row(
             children: [
@@ -1359,12 +1466,16 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           IconButton(
-            onPressed: _currentPage > 1 ? () => _goToPage(_currentPage - 1) : null,
+            onPressed:
+                _currentPage > 1 ? () => _goToPage(_currentPage - 1) : null,
             icon: const Icon(Icons.chevron_left),
           ),
           Text('$_currentPage / $_totalPages'),
           IconButton(
-            onPressed: _currentPage < _totalPages ? () => _goToPage(_currentPage + 1) : null,
+            onPressed:
+                _currentPage < _totalPages
+                    ? () => _goToPage(_currentPage + 1)
+                    : null,
             icon: const Icon(Icons.chevron_right),
           ),
         ],
@@ -1374,7 +1485,8 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
 
   Widget _buildDesktopStats() {
     final totalWarehouses = _warehouses.length;
-    final activeLocations = _warehouses.map((w) => w['location']).toSet().length;
+    final activeLocations =
+        _warehouses.map((w) => w['location']).toSet().length;
     final totalCapacity = totalWarehouses * 1000;
 
     return LayoutBuilder(
@@ -1456,7 +1568,12 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
     );
   }
 
-  Widget _buildDesktopStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildDesktopStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -1548,13 +1665,10 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
               children: [
                 const Text(
                   'Liste des Entrepôts',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                 ),
                 const Spacer(),
-                
+
                 // Search Bar
                 Container(
                   width: 300,
@@ -1573,13 +1687,16 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(color: Colors.grey[300]!),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                     ),
                     onChanged: _onSearchChanged,
                   ),
                 ),
                 const SizedBox(width: 16),
-                
+
                 // Add Button
                 ElevatedButton.icon(
                   onPressed: _showWarehouseForm,
@@ -1594,18 +1711,19 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
               ],
             ),
           ),
-          
+
           // Content
           Container(
             constraints: const BoxConstraints(minHeight: 400),
-            child: _loading
-                ? const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(40),
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                : _buildDesktopWarehousesList(),
+            child:
+                _loading
+                    ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                    : _buildDesktopWarehousesList(),
           ),
         ],
       ),
@@ -1624,34 +1742,63 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.grey[50],
-            border: Border(
-              bottom: BorderSide(color: Colors.grey[200]!),
-            ),
+            border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
           ),
           child: Row(
             children: [
-              const Expanded(flex: 2, child: Text('Nom', style: TextStyle(fontWeight: FontWeight.bold))),
-              const Expanded(flex: 2, child: Text('Emplacement', style: TextStyle(fontWeight: FontWeight.bold))),
-              const Expanded(flex: 1, child: Text('Capacité', style: TextStyle(fontWeight: FontWeight.bold))),
-              const Expanded(flex: 1, child: Text('Statut', style: TextStyle(fontWeight: FontWeight.bold))),
-              const SizedBox(width: 120, child: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold))),
+              const Expanded(
+                flex: 2,
+                child: Text(
+                  'Nom',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              const Expanded(
+                flex: 2,
+                child: Text(
+                  'Emplacement',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              const Expanded(
+                flex: 1,
+                child: Text(
+                  'Capacité',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              const Expanded(
+                flex: 1,
+                child: Text(
+                  'Statut',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(
+                width: 120,
+                child: Text(
+                  'Actions',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
             ],
           ),
         ),
-        
+
         // Table Body
         Container(
           height: 400, // Fixed height to avoid unbounded constraints
           child: ListView.separated(
             shrinkWrap: true,
             itemCount: _paginatedWarehouses.length,
-            separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey[200]),
+            separatorBuilder:
+                (_, __) => Divider(height: 1, color: Colors.grey[200]),
             itemBuilder: (context, index) {
               return _buildDesktopWarehouseRow(_paginatedWarehouses[index]);
             },
           ),
         ),
-        
+
         // Pagination
         if (_totalPages > 1) _buildDesktopPagination(),
       ],
@@ -1688,19 +1835,19 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
                 ],
               ),
             ),
-            
+
             // Location
             Expanded(
               flex: 2,
               child: Text(warehouse['location'] ?? 'Non défini'),
             ),
-            
+
             // Capacity
             Expanded(
               flex: 1,
               child: Text('${warehouse['capacity'] ?? 1000} m²'),
             ),
-            
+
             // Status
             Expanded(
               flex: 1,
@@ -1719,7 +1866,7 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
                 ),
               ),
             ),
-            
+
             // Actions
             SizedBox(
               width: 120,
@@ -1769,36 +1916,41 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
           Row(
             children: [
               IconButton(
-                onPressed: _currentPage > 1 ? () => _goToPage(_currentPage - 1) : null,
+                onPressed:
+                    _currentPage > 1 ? () => _goToPage(_currentPage - 1) : null,
                 icon: const Icon(Icons.chevron_left),
               ),
-              ...List.generate(
-                (_totalPages > 5) ? 5 : _totalPages,
-                (i) {
-                  final page = i + 1;
-                  return InkWell(
-                    onTap: () => _goToPage(page),
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: _currentPage == page ? Colors.teal : Colors.transparent,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        '$page',
-                        style: TextStyle(
-                          color: _currentPage == page ? Colors.white : Colors.black,
-                          fontWeight: FontWeight.w500,
-                        ),
+              ...List.generate((_totalPages > 5) ? 5 : _totalPages, (i) {
+                final page = i + 1;
+                return InkWell(
+                  onTap: () => _goToPage(page),
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color:
+                          _currentPage == page
+                              ? Colors.teal
+                              : Colors.transparent,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '$page',
+                      style: TextStyle(
+                        color:
+                            _currentPage == page ? Colors.white : Colors.black,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              }),
               IconButton(
-                onPressed: _currentPage < _totalPages ? () => _goToPage(_currentPage + 1) : null,
+                onPressed:
+                    _currentPage < _totalPages
+                        ? () => _goToPage(_currentPage + 1)
+                        : null,
                 icon: const Icon(Icons.chevron_right),
               ),
             ],
@@ -1839,9 +1991,7 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
             const SizedBox(height: 8),
             Text(
               'Essayez d\'ajuster votre recherche ou créez un nouvel entrepôt',
-              style: TextStyle(
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(color: Colors.grey[500]),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -1864,74 +2014,82 @@ class _WarehousesScreenState extends State<WarehousesScreen> with TickerProvider
   void _showWarehouseForm({Map<String, dynamic>? warehouse}) {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: SingleChildScrollView(
-          child: WarehouseForm(
-            warehouse: warehouse,
-            onSuccess: _fetchWarehouses,
+      builder:
+          (context) => Dialog(
+            backgroundColor: Colors.transparent,
+            child: SingleChildScrollView(
+              child: WarehouseForm(
+                warehouse: warehouse,
+                onSuccess: _fetchWarehouses,
+              ),
+            ),
           ),
-        ),
-      ),
     );
   }
 
   void _showWarehouseDetails(Map<String, dynamic> warehouse) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(warehouse['name'] ?? 'Détails de l\'entrepôt'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Nom: ${warehouse['name'] ?? 'N/A'}'),
-            const SizedBox(height: 8),
-            Text('Emplacement: ${warehouse['location'] ?? 'N/A'}'),
-            const SizedBox(height: 8),
-            Text('Capacité: ${warehouse['capacity'] ?? 1000} m²'),
-            const SizedBox(height: 8),
-            Text('Statut: Actif'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Fermer'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showWarehouseForm(warehouse: warehouse);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.teal,
-              foregroundColor: Colors.white,
+      builder:
+          (context) => AlertDialog(
+            title: Text(warehouse['name'] ?? 'Détails de l\'entrepôt'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Nom: ${warehouse['name'] ?? 'N/A'}'),
+                const SizedBox(height: 8),
+                Text('Emplacement: ${warehouse['location'] ?? 'N/A'}'),
+                const SizedBox(height: 8),
+                Text('Capacité: ${warehouse['capacity'] ?? 1000} m²'),
+                const SizedBox(height: 8),
+                Text('Statut: Actif'),
+              ],
             ),
-            child: const Text('Modifier'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Fermer'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showWarehouseForm(warehouse: warehouse);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Modifier'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   Future<void> _deleteWarehouse(Map<String, dynamic> warehouse) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Supprimer l\'entrepôt'),
-        content: Text('Êtes-vous sûr de vouloir supprimer "${warehouse['name']}" ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annuler'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Supprimer l\'entrepôt'),
+            content: Text(
+              'Êtes-vous sûr de vouloir supprimer "${warehouse['name']}" ?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Annuler'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  'Supprimer',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
     );
 
     if (confirm == true) {

@@ -131,8 +131,6 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 20),
               _buildSalesChartMobile(),
               const SizedBox(height: 20),
-              _buildTopProductsMobile(),
-              const SizedBox(height: 20),
               _buildProfitCategoryMobile(),
               const SizedBox(height: 20),
               _buildLowStockAlertsMobile(),
@@ -158,8 +156,6 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildStatsGrid(),
               const SizedBox(height: 20),
               _buildSalesChartMobile(),
-              const SizedBox(height: 20),
-              _buildTopProductsMobile(),
               const SizedBox(height: 20),
               _buildProfitCategoryMobile(),
               const SizedBox(height: 20),
@@ -2041,13 +2037,7 @@ class _DashboardChartsRow extends StatelessWidget {
   const _DashboardChartsRow({super.key, required this.selectedYear});
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(flex: 2, child: _SalesChart(selectedYear: selectedYear)),
-        const SizedBox(width: 16),
-        Expanded(child: _TopProductsChart(selectedYear: selectedYear)),
-      ],
-    );
+    return _SalesChart(selectedYear: selectedYear);
   }
 }
 
@@ -2310,240 +2300,6 @@ class _SalesChart extends StatelessWidget {
   }
 }
 
-class _TopProductsChart extends StatelessWidget {
-  final int selectedYear;
-
-  const _TopProductsChart({required this.selectedYear});
-
-  Future<List<Map<String, dynamic>>> _fetchTopProducts() async {
-    try {
-      final sales = await SalesService().getSales();
-      final Map<String, double> productRevenue = {};
-
-      // Filter sales by selected year
-      final yearSales =
-          sales.where((sale) {
-            final saleDate = DateTime.tryParse(sale['sale_date'] ?? '');
-            return saleDate != null && saleDate.year == selectedYear;
-          }).toList();
-
-      print(
-        '🔍 [TopProductsChart] Found ${yearSales.length} sales for year $selectedYear',
-      );
-
-      for (final sale in yearSales) {
-        try {
-          final saleItems = await SaleItemService().getSaleItems(sale['id']);
-
-          for (final item in saleItems) {
-            final productName = item.product?.name ?? 'Unknown Product';
-            final quantity = item.quantity ?? 0;
-            // Use product's current unit price if sale item unit price is 0
-            double unitPrice = item.unitPrice ?? 0;
-            if (unitPrice <= 0 && item.product?.unitPrice != null) {
-              unitPrice = item.product!.unitPrice;
-            }
-            final revenue = quantity * unitPrice;
-
-            productRevenue[productName] =
-                (productRevenue[productName] ?? 0) + revenue;
-          }
-        } catch (e) {
-          // Fallback: use sale total amount if available
-          final totalAmount =
-              double.tryParse(sale['total_amount']?.toString() ?? '') ?? 0;
-          if (totalAmount > 0) {
-            final customerName = sale['customer_name'] ?? 'Unknown Customer';
-            productRevenue['Sale to $customerName'] =
-                (productRevenue['Sale to $customerName'] ?? 0) + totalAmount;
-          }
-        }
-      }
-
-      // If no real data, add some demo data for testing
-      if (productRevenue.isEmpty) {
-        return [
-          {'name': 'Filtre à huile', 'revenue': 180.0},
-          {'name': 'Pneu 205/55 R16', 'revenue': 120.0},
-          {'name': 'Plaquettes de frein', 'revenue': 85.0},
-          {'name': 'Huile moteur', 'revenue': 65.0},
-          {'name': 'Batterie auto', 'revenue': 45.0},
-        ];
-      }
-
-      // Sort by revenue and take top 5
-      final sortedProducts =
-          productRevenue.entries.toList()
-            ..sort((a, b) => b.value.compareTo(a.value));
-
-      return sortedProducts
-          .take(5)
-          .map((entry) => {'name': entry.key, 'revenue': entry.value})
-          .toList();
-    } catch (e) {
-      return [];
-    }
-  }
-
-  Color _getProductColor(int index) {
-    final colors = [
-      Colors.blue,
-      Colors.green,
-      Colors.orange,
-      Colors.purple,
-      Colors.red,
-    ];
-    return colors[index % colors.length];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Top Produits par Revenus',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
-                ),
-              ),
-              Icon(Icons.more_horiz, color: Colors.grey[600]),
-            ],
-          ),
-          const SizedBox(height: 20),
-          FutureBuilder<List<Map<String, dynamic>>>(
-            future: _fetchTopProducts(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SizedBox(
-                  height: 200,
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-
-              final products = snapshot.data ?? [];
-
-              if (products.isEmpty) {
-                return const SizedBox(
-                  height: 200,
-                  child: Center(
-                    child: Text(
-                      'Aucune donnée disponible',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                );
-              }
-
-              return SizedBox(
-                height: 200,
-                child: Column(
-                  children:
-                      products.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final product = entry.value;
-                        final revenue = product['revenue'] as double;
-                        final name = product['name'] as String;
-
-                        // Calculate percentage of total revenue
-                        final totalRevenue = products.fold<double>(
-                          0,
-                          (sum, p) => sum + (p['revenue'] as double),
-                        );
-                        final percentage =
-                            totalRevenue > 0
-                                ? (revenue / totalRevenue) * 100
-                                : 0;
-
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 24,
-                                height: 24,
-                                decoration: BoxDecoration(
-                                  color: _getProductColor(index),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    '${index + 1}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      name.length > 20
-                                          ? '${name.substring(0, 20)}...'
-                                          : name,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    LinearProgressIndicator(
-                                      value: percentage / 100,
-                                      backgroundColor: Colors.grey[200],
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        _getProductColor(index),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                '${revenue.toStringAsFixed(0)} DNT',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey[800],
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ProfitByCategoryChart extends StatelessWidget {
   Future<List<Map<String, dynamic>>> _fetchProfitByCategory() async {
     try {
@@ -2581,22 +2337,13 @@ class _ProfitByCategoryChart extends StatelessWidget {
         }
       }
 
-      // If no real data, add some demo data for testing
-      if (categoryProfit.isEmpty) {
-        return [
-          {'category': 'Automobile', 'profit': 60.0},
-          {'category': 'Freins', 'profit': 45.0},
-          {'category': 'Filtres', 'profit': 30.0},
-          {'category': 'Lubrifiants', 'profit': 25.0},
-        ];
-      }
-
-      // Convert to list and sort by profit
+      // Convert to list and sort by profit (take top categories)
       final sortedCategories =
           categoryProfit.entries.toList()
             ..sort((a, b) => b.value.compareTo(a.value));
 
       return sortedCategories
+          .take(8) // Limit to top 8 categories for better visualization
           .map((entry) => {'category': entry.key, 'profit': entry.value})
           .toList();
     } catch (e) {
