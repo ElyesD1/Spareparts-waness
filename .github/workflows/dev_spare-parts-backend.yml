@@ -39,12 +39,13 @@ jobs:
           fi
 
       - name: Prepare deployment package
-        working-directory: waness_auto/spare-parts-management-system_backend
         run: |
-          mkdir -p ../../deploy
-          cp -r dist ../../deploy/
-          cp -r node_modules ../../deploy/
-          cp package*.json ../../deploy/
+          mkdir -p deploy
+          cp -r waness_auto/spare-parts-management-system_backend/dist deploy/
+          cp -r waness_auto/spare-parts-management-system_backend/node_modules deploy/
+          cp waness_auto/spare-parts-management-system_backend/package*.json deploy/
+          ls -la deploy/
+          ls -la deploy/dist/
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
