@@ -38,9 +38,26 @@ import { ProductTransfersModule } from './product-transfers/product-transfers.mo
         index: false,
       },
     }),
-    MongooseModule.forRoot(process.env.MONGODB_URI || 'mongodb://localhost:27017/spare_parts_management', {
-      retryWrites: true,
-      w: 'majority',
+    MongooseModule.forRootAsync({
+      useFactory: () => {
+        const uri = process.env.MONGODB_URI;
+        console.log('===========================================');
+        console.log('🔌 MongoDB Connection URI Check:');
+        console.log('MONGODB_URI exists:', !!uri);
+        console.log('Using Atlas?', uri?.includes('mongodb+srv') ? '✅ YES' : '❌ NO - USING LOCAL');
+        console.log('Full URI:', uri?.replace(/:[^:@]+@/, ':****@'));
+        console.log('===========================================');
+        
+        if (!uri || !uri.includes('mongodb+srv')) {
+          throw new Error('❌ MONGODB_URI is not set or not pointing to Atlas! Check your .env file');
+        }
+        
+        return {
+          uri,
+          retryWrites: true,
+          w: 'majority',
+        };
+      },
     }),
     ProductsModule,
     WarehousesModule,
