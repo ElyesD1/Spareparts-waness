@@ -19,7 +19,17 @@ async function bootstrap() {
     skipMissingProperties: true, // Skip validation for missing properties
   }));
 
-  app.enableCors();
+  // Configure CORS for production (Azure + Vercel)
+  app.enableCors({
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:8080',
+      /\.vercel\.app$/, // Allow all Vercel deployments and previews
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  });
 
   await app.listen(process.env.PORT ?? 3000);
 }

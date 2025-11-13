@@ -1,0 +1,35 @@
+# Flutter/Dart related
+.dart_tool/
+.packages
+.pub/
+build/
+*.lock
+
+# IDE related
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS related
+.DS_Store
+Thumbs.db
+
+# Build outputs (except web build which Vercel needs)
+!build/web/
+
+# Test files
+test/
+integration_test/
+
+# Android/iOS/Desktop
+android/
+ios/
+linux/
+macos/
+windows/
+
+# Documentation
+*.md
+!README.md

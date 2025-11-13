@@ -4,7 +4,8 @@ class AppConfig {
   // API Base URL - Change this based on your environment
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:3000',
+    defaultValue:
+        'https://spare-parts-backend-gpbfe7akaabta3hz.francecentral-01.azurewebsites.net',
   );
 
   // Alternative: You can also read from a config file or use different values for debug/release
