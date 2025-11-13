@@ -38,11 +38,19 @@ jobs:
             mkdir -p dist/uploads
           fi
 
+      - name: Prepare deployment package
+        working-directory: waness_auto/spare-parts-management-system_backend
+        run: |
+          mkdir -p ../../deploy
+          cp -r dist ../../deploy/
+          cp -r node_modules ../../deploy/
+          cp package*.json ../../deploy/
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: waness_auto/spare-parts-management-system_backend
+          path: deploy
 
   deploy:
     runs-on: ubuntu-latest
