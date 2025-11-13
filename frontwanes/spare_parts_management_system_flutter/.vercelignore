@@ -2,7 +2,6 @@
 .dart_tool/
 .packages
 .pub/
-build/
 *.lock
 
 # IDE related
@@ -16,14 +15,11 @@ build/
 .DS_Store
 Thumbs.db
 
-# Build outputs (except web build which Vercel needs)
-!build/web/
-
 # Test files
 test/
 integration_test/
 
-# Android/iOS/Desktop
+# Android/iOS/Desktop (not needed for web)
 android/
 ios/
 linux/
@@ -33,3 +29,6 @@ windows/
 # Documentation
 *.md
 !README.md
+
+# Keep the web build output - DO NOT IGNORE
+# !build/web/
