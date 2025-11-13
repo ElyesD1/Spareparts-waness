@@ -19,11 +19,13 @@ async function bootstrap() {
     skipMissingProperties: true, // Skip validation for missing properties
   }));
 
-  // Configure CORS for production (Azure + Vercel)
+  // Configure CORS for production (Azure + Vercel + Custom Domain)
   app.enableCors({
     origin: [
       'http://localhost:3000',
       'http://localhost:8080',
+      'https://wanesauto.me',
+      'https://www.wanesauto.me',
       /\.vercel\.app$/, // Allow all Vercel deployments and previews
     ],
     credentials: true,
